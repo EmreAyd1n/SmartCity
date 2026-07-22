@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Civic Reporter — Custom Theme (Tailwind CSS v4)
+   Kurumsal / Belediye temaya uygun koyu mavi, gri, vurgu renkleri
+   ============================================================ */
+
+@theme {
+  /* ---- Primary (Koyu Mavi — Kurumsal) ---- */
+  --color-primary-50:  #eef2ff;
+  --color-primary-100: #dbe4ff;
+  --color-primary-200: #b8c9ff;
+  --color-primary-300: #89a5ff;
+  --color-primary-400: #5a7dfc;
+  --color-primary-500: #3b5ef5;
+  --color-primary-600: #2541d4;
+  --color-primary-700: #1e35b0;
+  --color-primary-800: #1a2e8f;
+  --color-primary-900: #0f1d5e;
+  --color-primary-950: #091240;
+
+  /* ---- Accent (Turkuaz / Yeşil — Vurgu) ---- */
+  --color-accent-50:  #ecfdf5;
+  --color-accent-100: #d1fae5;
+  --color-accent-200: #a7f3d0;
+  --color-accent-300: #6ee7b7;
+  --color-accent-400: #34d399;
+  --color-accent-500: #10b981;
+  --color-accent-600: #059669;
+  --color-accent-700: #047857;
+  --color-accent-800: #065f46;
+  --color-accent-900: #064e3b;
+  --color-accent-950: #022c22;
+
+  /* ---- Neutral (Gri — Arayüz) ---- */
+  --color-surface-50:  #f8fafc;
+  --color-surface-100: #f1f5f9;
+  --color-surface-200: #e2e8f0;
+  --color-surface-300: #cbd5e1;
+  --color-surface-400: #94a3b8;
+  --color-surface-500: #64748b;
+  --color-surface-600: #475569;
+  --color-surface-700: #334155;
+  --color-surface-800: #1e293b;
+  --color-surface-900: #0f172a;
+  --color-surface-950: #020617;
+
+  /* ---- Danger / Warning / Info ---- */
+  --color-danger-500:  #ef4444;
+  --color-danger-600:  #dc2626;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-info-500:    #3b82f6;
+  --color-info-600:    #2563eb;
+
+  /* ---- Sidebar ---- */
+  --color-sidebar-bg:      #0f1d5e;
+  --color-sidebar-hover:   #1a2e8f;
+  --color-sidebar-active:  #2541d4;
+  --color-sidebar-text:    #dbe4ff;
+  --color-sidebar-muted:   #89a5ff;
+
+  /* ---- Typography ---- */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* ---- Shadows ---- */
+  --shadow-card:     0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+  --shadow-card-lg:  0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.07);
+  --shadow-sidebar:  4px 0 12px -2px rgba(0, 0, 0, 0.12);
+
+  /* ---- Border Radius ---- */
+  --radius-card: 0.75rem;
+  --radius-btn:  0.5rem;
+  --radius-input: 0.5rem;
+
+  /* ---- Transitions ---- */
+  --transition-base: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
+   Global base styles
+   ============================================================ */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface-50 text-surface-900 font-sans;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-surface-100;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-300 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-surface-400;
+  }
+}
+
+/* ============================================================
+   Utility components
+   ============================================================ */
+@layer components {
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-sm border border-surface-200 rounded-[var(--radius-card)] shadow-[var(--shadow-card)];
+  }
+
+  .glass-card-dark {
+    @apply bg-surface-800/80 backdrop-blur-sm border border-surface-700 rounded-[var(--radius-card)] shadow-[var(--shadow-card)];
+  }
+}
