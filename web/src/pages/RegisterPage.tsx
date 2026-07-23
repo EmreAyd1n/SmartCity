@@ -10,13 +10,18 @@ import {
   EyeOff,
   ArrowRight,
   Shield,
+  User,
+  Users
 } from 'lucide-react'
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const navigate = useNavigate()
   const { addToast } = useToast()
+  
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [role, setRole] = useState<'citizen' | 'official'>('citizen')
+  
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -25,19 +30,24 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            role: role,
+          }
+        }
       })
 
       if (error) {
         addToast('error', error.message)
-      } else if (data.session) {
-        addToast('success', 'Başarıyla giriş yapıldı!')
-        navigate('/')
+      } else if (data.user) {
+        addToast('success', 'Kayıt başarılı! Giriş yapabilirsiniz.')
+        navigate('/login')
       }
     } catch (err: any) {
-      addToast('error', err.message || 'Giriş yapılırken bir hata oluştu.')
+      addToast('error', err.message || 'Kayıt olurken bir hata oluştu.')
     } finally {
       setIsLoading(false)
     }
@@ -69,19 +79,14 @@ export default function LoginPage() {
         {/* Bilgi kartları */}
         <div className="relative z-10 space-y-6">
           <InfoCard
-            icon={<Shield className="w-5 h-5 text-accent-400" />}
-            title="Güvenli Erişim"
-            desc="Tüm şehir hizmetlerine tek bir hesaptan güvenle ulaşın."
+            icon={<Users className="w-5 h-5 text-accent-400" />}
+            title="Şehrinizi Daha İyi Yapın"
+            desc="Problemleri bildirin, projeleri takip edin ve şehrinize katkı sağlayın."
           />
           <InfoCard
-            icon={
-              <svg className="w-5 h-5 text-accent-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-            }
-            title="Harita Tabanlı Takip"
-            desc="Vatandaş bildirimlerini harita üzerinde anlık takip edin."
+            icon={<Shield className="w-5 h-5 text-accent-400" />}
+            title="Güvenli ve Hızlı"
+            desc="Kimliğiniz güvende, tüm talepleriniz anında ilgili birimlere ulaşıyor."
           />
         </div>
 
@@ -91,7 +96,7 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* ── Sağ Panel — Giriş Formu ── */}
+      {/* ── Sağ Panel — Kayıt Formu ── */}
       <div className="flex flex-1 items-center justify-center bg-surface-50 px-6 py-12">
         <div className="w-full max-w-md space-y-8">
           {/* Mobil logo */}
@@ -106,14 +111,48 @@ export default function LoginPage() {
 
           <div>
             <h1 className="text-3xl font-extrabold text-surface-900 tracking-tight">
-              Hoş Geldiniz
+              Kayıt Ol
             </h1>
             <p className="mt-2 text-surface-500">
-              Hesabınıza erişmek için giriş yapın
+              Şehrinize katkı sağlamak için hesap oluşturun
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            
+            {/* Rol Seçimi */}
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-surface-700 mb-2">
+                Hesap Türü
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setRole('citizen')}
+                  className={`flex flex-col items-center justify-center p-4 border rounded-xl transition-all duration-200 ${
+                    role === 'citizen'
+                      ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-500'
+                      : 'border-surface-200 bg-white text-surface-500 hover:bg-surface-50'
+                  }`}
+                >
+                  <User className={`w-6 h-6 mb-2 ${role === 'citizen' ? 'text-primary-600' : 'text-surface-400'}`} />
+                  <span className="text-sm font-medium">Vatandaş</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole('official')}
+                  className={`flex flex-col items-center justify-center p-4 border rounded-xl transition-all duration-200 ${
+                    role === 'official'
+                      ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm ring-1 ring-primary-500'
+                      : 'border-surface-200 bg-white text-surface-500 hover:bg-surface-50'
+                  }`}
+                >
+                  <Building2 className={`w-6 h-6 mb-2 ${role === 'official' ? 'text-primary-600' : 'text-surface-400'}`} />
+                  <span className="text-sm font-medium">Belediye Görevlisi</span>
+                </button>
+              </div>
+            </div>
+
             {/* E-posta */}
             <div className="space-y-1.5">
               <label
@@ -150,9 +189,10 @@ export default function LoginPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   required
+                  minLength={6}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="En az 6 karakter"
                   className="w-full rounded-[var(--radius-input)] border border-surface-300 bg-white py-2.5 pl-10 pr-11 text-sm text-surface-900 placeholder:text-surface-400 outline-none transition-[border-color,box-shadow] duration-[var(--transition-base)] focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                 />
                 <button
@@ -170,23 +210,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Beni hatırla + Şifremi unuttum */}
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="rounded border-surface-300 text-primary-600 focus:ring-primary-500/30"
-                />
-                <span className="text-surface-600">Beni hatırla</span>
-              </label>
-              <button
-                type="button"
-                className="text-primary-600 hover:text-primary-700 font-medium transition-colors"
-              >
-                Şifremi unuttum
-              </button>
-            </div>
-
             {/* Gönder butonu */}
             <button
               type="submit"
@@ -197,7 +220,7 @@ export default function LoginPage() {
                 <span className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  Giriş Yap
+                  Kayıt Ol
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </>
               )}
@@ -205,9 +228,9 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-sm text-surface-500">
-            Hesabınız yok mu?{' '}
-            <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium transition-colors">
-              Hemen Kayıt Olun
+            Zaten hesabınız var mı?{' '}
+            <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium transition-colors">
+              Giriş Yapın
             </Link>
           </p>
         </div>
