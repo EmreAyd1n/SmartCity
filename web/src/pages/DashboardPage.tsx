@@ -7,7 +7,10 @@ import {
   TrendingDown,
   Minus,
   ArrowUpRight,
+  Plus
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import type { StatCard } from '../types'
 
 /* ── Mock istatistik verileri ── */
@@ -127,16 +130,30 @@ const statusBadge: Record<string, { label: string; cls: string }> = {
 }
 
 export default function DashboardPage() {
+  const { profile } = useAuth();
+  
   return (
     <div className="space-y-8">
       {/* ── Başlık ── */}
-      <div>
-        <h1 className="text-2xl font-bold text-surface-900 tracking-tight">
-          Dashboard
-        </h1>
-        <p className="text-surface-500 text-sm mt-1">
-          Bildirim ve operasyon durumuna genel bakış
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-surface-900 tracking-tight">
+            Dashboard
+          </h1>
+          <p className="text-surface-500 text-sm mt-1">
+            Bildirim ve operasyon durumuna genel bakış
+          </p>
+        </div>
+        
+        {profile?.role === 'citizen' && (
+          <Link
+            to="/create-issue"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Yeni Sorun Bildir
+          </Link>
+        )}
       </div>
 
       {/* ── İstatistik Kartları ── */}
