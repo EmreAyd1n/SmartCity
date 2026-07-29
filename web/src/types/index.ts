@@ -8,7 +8,7 @@
 // ────────────────────────────────────────
 
 /** Kullanıcı rolü */
-export type UserRole = 'citizen' | 'admin' | 'staff'
+export type UserRole = 'citizen' | 'admin' | 'official'
 
 /** Bildirim durumu */
 export type ReportStatus = 'pending' | 'in_progress' | 'resolved' | 'rejected'
@@ -52,7 +52,7 @@ export interface Report {
   address: string | null
   image_url: string | null
   citizen_id: string
-  assigned_staff_id: string | null
+  assigned_official_id: string | null
   created_at: string
   updated_at: string
 }
@@ -96,7 +96,7 @@ export type ReportHistoryInsert = Omit<ReportHistory, 'id' | 'created_at'>
 export interface ReportWithRelations extends Report {
   category: Category
   citizen: Profile
-  assigned_staff: Profile | null
+  assigned_official: Profile | null
   history?: ReportHistory[]
 }
 

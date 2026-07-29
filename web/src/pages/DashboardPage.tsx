@@ -1,3 +1,4 @@
+import React, { useEffect, useState, useMemo } from 'react'
 import {
   AlertTriangle,
   CheckCircle2,
@@ -6,44 +7,16 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  ArrowUpRight,
-  Plus
+  Plus,
+  Loader2
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import type { StatCard } from '../types'
-
-/* ── Mock istatistik verileri ── */
-const stats: StatCard[] = [
-  {
-    label: 'Toplam Bildirim',
-    value: 1_284,
-    change: 12.5,
-    trend: 'up',
-    icon: 'file',
-  },
-  {
-    label: 'Bekleyen',
-    value: 47,
-    change: -8.2,
-    trend: 'down',
-    icon: 'clock',
-  },
-  {
-    label: 'Çözülen',
-    value: 1_189,
-    change: 15.3,
-    trend: 'up',
-    icon: 'check',
-  },
-  {
-    label: 'Kritik',
-    value: 12,
-    change: 0,
-    trend: 'neutral',
-    icon: 'alert',
-  },
-]
+import { useToast } from '../context/ToastContext'
+import type { StatCard, ReportWithRelations, Category, ReportStatus } from '../types'
+import { getReports, getCategories, updateReportStatus } from '../services/reports'
+import ReportsList from '../components/dashboard/ReportsList'
+import ReportDetailModal from '../components/dashboard/ReportDetailModal'
 
 const iconMap: Record<string, React.ReactNode> = {
   file: <FileText className="w-6 h-6" />,
@@ -71,69 +44,98 @@ const cardAccent: Record<string, string> = {
   alert: 'from-danger-500 to-danger-600',
 }
 
-/* ── Son bildirimler (mock) ── */
-const recentReports = [
-  {
-    id: '1',
-    title: 'Atatürk Caddesi çukur',
-    category: 'Altyapı',
-    status: 'pending' as const,
-    time: '2 dk önce',
-  },
-  {
-    id: '2',
-    title: 'Park aydınlatması arızalı',
-    category: 'Aydınlatma',
-    status: 'in_progress' as const,
-    time: '15 dk önce',
-  },
-  {
-    id: '3',
-    title: 'Çöp konteyneri taşmış',
-    category: 'Çevre',
-    status: 'resolved' as const,
-    time: '1 saat önce',
-  },
-  {
-    id: '4',
-    title: 'Trafik ışığı çalışmıyor',
-    category: 'Trafik',
-    status: 'in_progress' as const,
-    time: '2 saat önce',
-  },
-  {
-    id: '5',
-    title: 'Su borusu patlaması',
-    category: 'Su / Kanalizasyon',
-    status: 'pending' as const,
-    time: '3 saat önce',
-  },
-]
-
-const statusBadge: Record<string, { label: string; cls: string }> = {
-  pending: {
-    label: 'Bekliyor',
-    cls: 'bg-warning-500/10 text-warning-600 border border-warning-500/20',
-  },
-  in_progress: {
-    label: 'İşlemde',
-    cls: 'bg-info-500/10 text-info-600 border border-info-500/20',
-  },
-  resolved: {
-    label: 'Çözüldü',
-    cls: 'bg-accent-500/10 text-accent-600 border border-accent-500/20',
-  },
-  rejected: {
-    label: 'Reddedildi',
-    cls: 'bg-danger-500/10 text-danger-600 border border-danger-500/20',
-  },
-}
-
 export default function DashboardPage() {
-  const { profile } = useAuth();
+  const { profile } = useAuth()
+  const { addToast } = useToast()
   
+  const [reports, setReports] = useState<ReportWithRelations[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedReport, setSelectedReport] = useState<ReportWithRelations | null>(null)
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true)
+        const [reportsData, categoriesData] = await Promise.all([
+          getReports(),
+          getCategories()
+        ])
+        setReports(reportsData)
+        setCategories(categoriesData)
+      } catch (error: any) {
+        addToast(error.message || 'Veriler yüklenirken hata oluştu.', 'error')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [addToast])
+
+  // İstatistikleri hesapla
+  const stats: StatCard[] = useMemo(() => {
+    const total = reports.length
+    const pending = reports.filter(r => r.status === 'pending').length
+    const resolved = reports.filter(r => r.status === 'resolved').length
+    const urgent = reports.filter(r => r.priority === 'urgent' || r.priority === 'high').length
+
+    return [
+      {
+        label: 'Toplam Bildirim',
+        value: total,
+        icon: 'file',
+        trend: 'up',
+        change: 0 // Statik (örnek amaçlı)
+      },
+      {
+        label: 'Bekleyen',
+        value: pending,
+        icon: 'clock',
+        trend: 'down',
+        change: 0
+      },
+      {
+        label: 'Çözülen',
+        value: resolved,
+        icon: 'check',
+        trend: 'up',
+        change: 0
+      },
+      {
+        label: 'Kritik / Yüksek Öncelikli',
+        value: urgent,
+        icon: 'alert',
+        trend: 'neutral'
+      }
+    ]
+  }, [reports])
+
+  const handleStatusChange = async (reportId: string, newStatus: ReportStatus) => {
+    if (!profile) return
+    try {
+      await updateReportStatus(reportId, newStatus, profile.id)
+      
+      // UI State'i güncelle
+      setReports(prev => prev.map(r => 
+        r.id === reportId ? { ...r, status: newStatus } : r
+      ))
+      
+      addToast('Durum başarıyla güncellendi.', 'success')
+    } catch (error: any) {
+      addToast(error.message || 'Durum güncellenirken hata oluştu.', 'error')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in duration-500">
       {/* ── Başlık ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -185,7 +187,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Trend */}
-            {stat.trend && (
+            {stat.trend && stat.change !== 0 && (
               <div className="mt-3 flex items-center gap-1.5">
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${trendColor[stat.trend]}`}
@@ -204,50 +206,19 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* ── Son Bildirimler ── */}
-      <div className="glass-card overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-surface-200">
-          <h2 className="text-lg font-semibold text-surface-900">
-            Son Bildirimler
-          </h2>
-          <button className="inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors">
-            Tümünü Gör
-            <ArrowUpRight className="w-4 h-4" />
-          </button>
-        </div>
+      {/* ── Dinamik Liste ── */}
+      <ReportsList
+        reports={reports}
+        categories={categories}
+        onReportClick={setSelectedReport}
+        onStatusChange={handleStatusChange}
+      />
 
-        <div className="divide-y divide-surface-100">
-          {recentReports.map((r) => (
-            <div
-              key={r.id}
-              className="flex items-center justify-between px-6 py-4 hover:bg-surface-50/70 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-4 min-w-0">
-                <div className="shrink-0 w-2 h-2 rounded-full bg-primary-500" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-surface-800 truncate">
-                    {r.title}
-                  </p>
-                  <p className="text-xs text-surface-400 mt-0.5">
-                    {r.category}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 shrink-0">
-                <span
-                  className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${statusBadge[r.status].cls}`}
-                >
-                  {statusBadge[r.status].label}
-                </span>
-                <span className="text-xs text-surface-400 w-20 text-right">
-                  {r.time}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* ── Modal ── */}
+      <ReportDetailModal
+        report={selectedReport}
+        onClose={() => setSelectedReport(null)}
+      />
     </div>
   )
 }

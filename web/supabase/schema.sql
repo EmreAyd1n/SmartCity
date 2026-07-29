@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   email       TEXT UNIQUE NOT NULL,
   full_name   TEXT,
   role        TEXT NOT NULL DEFAULT 'citizen'
-              CHECK (role IN ('citizen', 'admin', 'staff')),
+              CHECK (role IN ('citizen', 'admin', 'official')),
   avatar_url  TEXT,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS reports (
   address           TEXT,
   image_url         TEXT,
   citizen_id        UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  assigned_staff_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  assigned_official_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -203,7 +203,7 @@ CREATE POLICY "reports_update_owner_or_staff"
     OR EXISTS (
       SELECT 1 FROM profiles
       WHERE profiles.id = auth.uid()
-        AND profiles.role IN ('admin', 'staff')
+        AND profiles.role IN ('admin', 'official')
     )
   );
 
@@ -233,7 +233,7 @@ CREATE POLICY "report_history_insert_staff"
     EXISTS (
       SELECT 1 FROM profiles
       WHERE profiles.id = auth.uid()
-        AND profiles.role IN ('admin', 'staff')
+        AND profiles.role IN ('admin', 'official')
     )
   );
 
@@ -259,13 +259,13 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at) VALUES
   ('00000000-0000-4000-a000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@civicreporter.dev', crypt('password123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Ayşe Yılmaz","role":"admin"}', now(), now()),
-  ('00000000-0000-4000-a000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'staff@civicreporter.dev', crypt('password123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Mehmet Kaya","role":"staff"}', now(), now()),
+  ('00000000-0000-4000-a000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'official@civicreporter.dev', crypt('password123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Mehmet Kaya","role":"staff"}', now(), now()),
   ('00000000-0000-4000-a000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'citizen@civicreporter.dev', crypt('password123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Zeynep Demir","role":"citizen"}', now(), now())
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO profiles (id, email, full_name, role) VALUES
   ('00000000-0000-4000-a000-000000000001', 'admin@civicreporter.dev',  'Ayşe Yılmaz',    'admin'),
-  ('00000000-0000-4000-a000-000000000002', 'staff@civicreporter.dev',  'Mehmet Kaya',     'staff'),
+  ('00000000-0000-4000-a000-000000000002', 'official@civicreporter.dev',  'Mehmet Kaya',     'official'),
   ('00000000-0000-4000-a000-000000000003', 'citizen@civicreporter.dev','Zeynep Demir',    'citizen')
 ON CONFLICT (id) DO UPDATE SET
   email = EXCLUDED.email,
@@ -274,7 +274,7 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- ── Örnek Bildirimler ───────────────────────────────────────
 
-INSERT INTO reports (id, title, description, category_id, status, priority, latitude, longitude, address, citizen_id, assigned_staff_id) VALUES
+INSERT INTO reports (id, title, description, category_id, status, priority, latitude, longitude, address, citizen_id, assigned_official_id) VALUES
   (
     'b0b0b0b0-0001-4000-b000-000000000001',
     'Atatürk Caddesi''nde derin çukur',
