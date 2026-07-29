@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import type { ReportWithRelations, ReportStatus, Category } from '../types'
+import type { ReportWithRelations, ReportStatus, Category, ReportInsert } from '../types'
 
 /**
  * Raporları kategorileri ve profil bilgileriyle birlikte getirir.
@@ -79,5 +79,59 @@ export async function updateReportStatus(
   if (historyError) {
     console.error('Error inserting report history:', historyError)
     // Sadece loglamak yeterli olabilir, ana durum değişti.
+  }
+}
+
+
+/**
+ * Rapor için görsel yükler ve public URL'ini döner.
+ */
+export async function uploadReportImage(file: File): Promise<string> {
+  const fileExt = file.name.split('.').pop()
+  const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`
+  const filePath = `${fileName}`
+
+  const { error: uploadError } = await supabase.storage
+    .from('issues')
+    .upload(filePath, file)
+
+  if (uploadError) {
+    console.error('Error uploading image:', uploadError)
+    throw new Error('Görsel yüklenirken bir hata oluştu.')
+  }
+
+  const { data } = supabase.storage
+    .from('issues')
+    .getPublicUrl(filePath)
+
+  return data.publicUrl
+}
+
+/**
+ * Yeni rapor oluşturur
+ */
+export async function createReport(
+  reportData: { title: string; description: string; category_id: string; address: string; image_url?: string },
+  citizenId: string
+): Promise<void> {
+  const newReport: ReportInsert = {
+    title: reportData.title,
+    description: reportData.description,
+    category_id: reportData.category_id,
+    address: reportData.address,
+    image_url: reportData.image_url || null,
+    citizen_id: citizenId,
+    priority: 'medium',
+    latitude: null,
+    longitude: null,
+  }
+
+  const { error } = await supabase
+    .from('reports')
+    .insert(newReport)
+
+  if (error) {
+    console.error('Error creating report:', error)
+    throw new Error('Rapor oluşturulurken bir hata oluştu.')
   }
 }

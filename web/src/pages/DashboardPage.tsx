@@ -10,13 +10,14 @@ import {
   Plus,
   Loader2
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import type { StatCard, ReportWithRelations, Category, ReportStatus } from '../types'
 import { getReports, getCategories, updateReportStatus } from '../services/reports'
 import ReportsList from '../components/dashboard/ReportsList'
 import ReportDetailModal from '../components/dashboard/ReportDetailModal'
+import CreateReportModal from '../components/dashboard/CreateReportModal'
 
 const iconMap: Record<string, React.ReactNode> = {
   file: <FileText className="w-6 h-6" />,
@@ -52,6 +53,7 @@ export default function DashboardPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedReport, setSelectedReport] = useState<ReportWithRelations | null>(null)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -71,6 +73,18 @@ export default function DashboardPage() {
     }
     fetchData()
   }, [addToast])
+
+  const refreshReports = async () => {
+    try {
+      setLoading(true)
+      const reportsData = await getReports()
+      setReports(reportsData)
+    } catch (error: any) {
+      addToast(error.message || 'Veriler yüklenirken hata oluştu.', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // İstatistikleri hesapla
   const stats: StatCard[] = useMemo(() => {
@@ -148,13 +162,13 @@ export default function DashboardPage() {
         </div>
         
         {profile?.role === 'citizen' && (
-          <Link
-            to="/create-issue"
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
             className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
           >
             <Plus className="w-4 h-4" />
             Yeni Sorun Bildir
-          </Link>
+          </button>
         )}
       </div>
 
@@ -214,10 +228,17 @@ export default function DashboardPage() {
         onStatusChange={handleStatusChange}
       />
 
-      {/* ── Modal ── */}
+      {/* ── Modallar ── */}
       <ReportDetailModal
         report={selectedReport}
         onClose={() => setSelectedReport(null)}
+      />
+
+      <CreateReportModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={refreshReports}
+        categories={categories}
       />
     </div>
   )
