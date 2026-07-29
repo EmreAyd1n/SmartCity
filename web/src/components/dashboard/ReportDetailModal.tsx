@@ -1,6 +1,18 @@
-import React, { useEffect } from 'react'
-import { X, MapPin, Calendar, User, Tag } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import {
+  X,
+  MapPin,
+  Calendar,
+  User,
+  Tag,
+  History,
+  ArrowRight,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react'
 import type { ReportWithRelations } from '../../types'
+import { getReportHistory, type ReportHistoryWithProfile } from '../../services/reports'
 
 interface ReportDetailModalProps {
   report: ReportWithRelations | null
@@ -26,7 +38,18 @@ const statusBadge: Record<string, { label: string; cls: string }> = {
   },
 }
 
+const statusDotColor: Record<string, string> = {
+  pending: 'bg-warning-500',
+  in_progress: 'bg-info-500',
+  resolved: 'bg-accent-500',
+  rejected: 'bg-danger-500',
+}
+
 export default function ReportDetailModal({ report, onClose }: ReportDetailModalProps) {
+  const [history, setHistory] = useState<ReportHistoryWithProfile[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
+
   // ESC tuşu ile kapatma
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -35,6 +58,31 @@ export default function ReportDetailModal({ report, onClose }: ReportDetailModal
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
+
+  // Rapor değiştiğinde geçmişi yükle
+  useEffect(() => {
+    if (!report) {
+      setHistory([])
+      setHistoryOpen(false)
+      return
+    }
+
+    async function fetchHistory() {
+      if (!report) return
+      try {
+        setHistoryLoading(true)
+        const data = await getReportHistory(report.id)
+        setHistory(data)
+      } catch (err) {
+        console.error('History fetch error:', err)
+        setHistory([])
+      } finally {
+        setHistoryLoading(false)
+      }
+    }
+
+    fetchHistory()
+  }, [report?.id])
 
   if (!report) return null
 
@@ -176,6 +224,133 @@ export default function ReportDetailModal({ report, onClose }: ReportDetailModal
               )}
             </div>
 
+          </div>
+
+          {/* ── Durum Değişiklik Tarihçesi (Audit History) ── */}
+          <div className="mt-8 border-t border-surface-100 pt-6">
+            <button
+              onClick={() => setHistoryOpen(!historyOpen)}
+              className="flex items-center justify-between w-full group"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-500/10 text-primary-600">
+                  <History className="w-4.5 h-4.5" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-sm font-semibold text-surface-900 uppercase tracking-wider">
+                    Değişiklik Tarihçesi
+                  </h3>
+                  <p className="text-xs text-surface-500">
+                    {history.length > 0
+                      ? `${history.length} durum değişikliği`
+                      : 'Henüz değişiklik yok'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-surface-100 text-surface-500 transition-colors group-hover:bg-surface-200">
+                {historyOpen ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </div>
+            </button>
+
+            {/* Timeline */}
+            {historyOpen && (
+              <div className="mt-4 animate-in slide-in-from-top-2 duration-200">
+                {historyLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-5 h-5 text-primary-500 animate-spin" />
+                    <span className="ml-2 text-sm text-surface-500">Yükleniyor…</span>
+                  </div>
+                ) : history.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <History className="w-8 h-8 text-surface-300 mx-auto mb-2" />
+                    <p className="text-sm text-surface-500">
+                      Bu rapor için henüz durum değişikliği kaydı bulunmuyor.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="relative ml-4 border-l-2 border-surface-200 space-y-0">
+                    {history.map((entry, idx) => (
+                      <div
+                        key={entry.id}
+                        className="relative pl-6 pb-6 last:pb-0 group/entry"
+                        style={{ animationDelay: `${idx * 60}ms` }}
+                      >
+                        {/* Timeline dot */}
+                        <div
+                          className={`absolute -left-[9px] top-0.5 w-4 h-4 rounded-full border-2 border-white shadow-sm ${
+                            statusDotColor[entry.status] || 'bg-surface-400'
+                          }`}
+                        />
+
+                        <div className="glass-card p-4 transition-shadow duration-200 hover:shadow-[var(--shadow-card-lg)]">
+                          {/* Durum badge */}
+                          <div className="flex items-center flex-wrap gap-2 mb-2">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                statusBadge[entry.status]?.cls || 'bg-surface-100 text-surface-600'
+                              }`}
+                            >
+                              {statusBadge[entry.status]?.label || entry.status}
+                            </span>
+
+                            {/* Önceki durum → yeni durum gösterimi */}
+                            {idx > 0 && (
+                              <span className="inline-flex items-center gap-1 text-xs text-surface-400">
+                                <span
+                                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                                    statusBadge[history[idx - 1].status]?.cls || 'bg-surface-100 text-surface-600'
+                                  }`}
+                                >
+                                  {statusBadge[history[idx - 1].status]?.label || history[idx - 1].status}
+                                </span>
+                                <ArrowRight className="w-3 h-3 text-surface-400" />
+                                <span
+                                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                                    statusBadge[entry.status]?.cls || 'bg-surface-100 text-surface-600'
+                                  }`}
+                                >
+                                  {statusBadge[entry.status]?.label || entry.status}
+                                </span>
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Not */}
+                          {entry.notes && (
+                            <p className="text-sm text-surface-700 mb-2">
+                              {entry.notes}
+                            </p>
+                          )}
+
+                          {/* Meta: Kişi + Tarih */}
+                          <div className="flex items-center flex-wrap gap-3 text-xs text-surface-500">
+                            <span className="inline-flex items-center gap-1.5">
+                              <div className="w-5 h-5 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-[10px] font-bold">
+                                {entry.changer?.full_name
+                                  ? entry.changer.full_name.charAt(0).toUpperCase()
+                                  : '?'}
+                              </div>
+                              {entry.changer?.full_name || 'Bilinmeyen Kullanıcı'}
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(entry.created_at).toLocaleString('tr-TR', {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

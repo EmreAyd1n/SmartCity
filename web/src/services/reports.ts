@@ -1,5 +1,33 @@
 import { supabase } from '../lib/supabase'
-import type { ReportWithRelations, ReportStatus, Category, ReportInsert } from '../types'
+import type {
+  ReportWithRelations,
+  ReportStatus,
+  Category,
+  ReportInsert,
+  ReportHistory,
+  Profile,
+} from '../types'
+
+// ────────────────────────────────────────
+// Dashboard İstatistik Tipleri
+// ────────────────────────────────────────
+
+export interface DashboardStats {
+  total: number
+  pending: number
+  inProgress: number
+  resolved: number
+  rejected: number
+  urgent: number
+  high: number
+  /** Çözülme oranı (0–100) */
+  resolutionRate: number
+}
+
+/** Profil bilgisi eklenmiş rapor geçmişi */
+export interface ReportHistoryWithProfile extends ReportHistory {
+  changer: Profile | null
+}
 
 /**
  * Raporları kategorileri ve profil bilgileriyle birlikte getirir.
@@ -134,4 +162,67 @@ export async function createReport(
     console.error('Error creating report:', error)
     throw new Error('Rapor oluşturulurken bir hata oluştu.')
   }
+}
+
+// ────────────────────────────────────────
+// Dashboard İstatistikleri
+// ────────────────────────────────────────
+
+/**
+ * Tüm raporlar üzerinden durumlarına ve önceliklerine göre
+ * özet sayısal verileri hesaplayıp döndürür.
+ */
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const { data, error } = await supabase
+    .from('reports')
+    .select('status, priority')
+
+  if (error) {
+    console.error('Error fetching dashboard stats:', error)
+    throw new Error('Dashboard istatistikleri yüklenirken bir hata oluştu.')
+  }
+
+  const reports = data || []
+  const total = reports.length
+  const pending = reports.filter(r => r.status === 'pending').length
+  const inProgress = reports.filter(r => r.status === 'in_progress').length
+  const resolved = reports.filter(r => r.status === 'resolved').length
+  const rejected = reports.filter(r => r.status === 'rejected').length
+  const urgent = reports.filter(r => r.priority === 'urgent').length
+  const high = reports.filter(r => r.priority === 'high').length
+  const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 0
+
+  return { total, pending, inProgress, resolved, rejected, urgent, high, resolutionRate }
+}
+
+// ────────────────────────────────────────
+// Rapor Durum Değişim Geçmişi (Audit Log)
+// ────────────────────────────────────────
+
+/**
+ * Belirli bir raporun `report_history` tablosundaki durum
+ * değişim kayıtlarını ve işlemi yapan kişinin profil bilgisini getirir.
+ * Sonuçlar kronolojik olarak (eskiden yeniye) sıralanır.
+ */
+export async function getReportHistory(
+  reportId: string
+): Promise<ReportHistoryWithProfile[]> {
+  const { data, error } = await supabase
+    .from('report_history')
+    .select(`
+      *,
+      changer:profiles!report_history_changed_by_fkey(*)
+    `)
+    .eq('report_id', reportId)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching report history:', error)
+    throw new Error('Rapor geçmişi yüklenirken bir hata oluştu.')
+  }
+
+  return (data || []).map((entry) => ({
+    ...entry,
+    changer: Array.isArray(entry.changer) ? entry.changer[0] : entry.changer,
+  })) as ReportHistoryWithProfile[]
 }
