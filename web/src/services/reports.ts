@@ -139,7 +139,7 @@ export async function uploadReportImage(file: File): Promise<string> {
  * Yeni rapor oluşturur
  */
 export async function createReport(
-  reportData: { title: string; description: string; category_id: string; address: string; image_url?: string },
+  reportData: { title: string; description: string; category_id: string; address: string; image_url?: string; latitude?: number; longitude?: number },
   citizenId: string
 ): Promise<void> {
   const newReport: ReportInsert = {
@@ -150,8 +150,8 @@ export async function createReport(
     image_url: reportData.image_url || null,
     citizen_id: citizenId,
     priority: 'medium',
-    latitude: null,
-    longitude: null,
+    latitude: reportData.latitude || null,
+    longitude: reportData.longitude || null,
   }
 
   const { error } = await supabase
