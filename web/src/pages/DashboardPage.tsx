@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react'
 import {
   Plus,
   Loader2,
+  Map,
+  List,
 } from 'lucide-react'
 
 import { useAuth } from '../context/AuthContext'
@@ -12,6 +14,7 @@ import ReportsList from '../components/dashboard/ReportsList'
 import ReportDetailModal from '../components/dashboard/ReportDetailModal'
 import CreateReportModal from '../components/dashboard/CreateReportModal'
 import StatsOverview from '../components/dashboard/StatsOverview'
+import InteractiveMap from '../components/map/InteractiveMap'
 
 export default function DashboardPage() {
   const { profile } = useAuth()
@@ -23,6 +26,7 @@ export default function DashboardPage() {
   const [selectedReport, setSelectedReport] = useState<ReportWithRelations | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('map')
 
   const isOfficial = profile?.role === 'official' || profile?.role === 'admin'
 
@@ -118,13 +122,50 @@ export default function DashboardPage() {
         refreshKey={refreshKey}
       />
 
-      {/* ── Dinamik Liste ── */}
-      <ReportsList
-        reports={reports}
-        categories={categories}
-        onReportClick={setSelectedReport}
-        onStatusChange={handleStatusChange}
-      />
+      {/* ── Harita / Liste Görünümü Toggle ve İçerik ── */}
+      <div className="flex flex-col gap-4 mt-2">
+        <div className="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border border-surface-200">
+          <h2 className="text-lg font-semibold text-surface-900 ml-2">
+            Bildirimler
+          </h2>
+          <div className="flex bg-surface-100 p-1 rounded-lg">
+            <button
+              onClick={() => setViewMode('map')}
+              className={`px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2 transition-all duration-200 ${viewMode === 'map' ? 'bg-white shadow-sm text-primary-600' : 'text-surface-600 hover:text-surface-900 hover:bg-surface-200'}`}
+            >
+              <Map className="w-4 h-4" />
+              Harita
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-4 py-2 text-sm font-medium rounded-md flex items-center gap-2 transition-all duration-200 ${viewMode === 'list' ? 'bg-white shadow-sm text-primary-600' : 'text-surface-600 hover:text-surface-900 hover:bg-surface-200'}`}
+            >
+              <List className="w-4 h-4" />
+              Liste
+            </button>
+          </div>
+        </div>
+
+        <div className="min-h-[500px]">
+          {viewMode === 'map' ? (
+            <div className="h-[600px] w-full animate-in fade-in duration-300">
+              <InteractiveMap 
+                reports={reports} 
+                onMarkerClick={(report) => setSelectedReport(report)} 
+              />
+            </div>
+          ) : (
+            <div className="animate-in fade-in duration-300">
+              <ReportsList
+                reports={reports}
+                categories={categories}
+                onReportClick={setSelectedReport}
+                onStatusChange={handleStatusChange}
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* ── Modallar ── */}
       <ReportDetailModal
