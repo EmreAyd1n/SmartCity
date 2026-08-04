@@ -8,8 +8,9 @@ import {
 
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
+import { supabase } from '../lib/supabase'
 import type { ReportWithRelations, Category, ReportStatus } from '../types'
-import { getReports, getCategories, updateReportStatus } from '../services/reports'
+import { getReports, getCategories, updateReportStatus, getReportById } from '../services/reports'
 import ReportsList from '../components/dashboard/ReportsList'
 import ReportDetailModal from '../components/dashboard/ReportDetailModal'
 import CreateReportModal from '../components/dashboard/CreateReportModal'
@@ -44,9 +45,48 @@ export default function DashboardPage() {
         addToast(error.message || 'Veriler yüklenirken hata oluştu.', 'error')
       } finally {
         setLoading(false)
-      }
     }
     fetchData()
+  }, [addToast])
+
+  // Supabase Real-time Listener
+  useEffect(() => {
+    const channel = supabase
+      .channel('public:reports')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'reports' },
+        async (payload) => {
+          const newReportId = payload.new.id
+          const fullReport = await getReportById(newReportId)
+          if (fullReport) {
+            setReports((prev) => [fullReport, ...prev])
+            setRefreshKey((prev) => prev + 1)
+            addToast(`🚨 Yeni Şehir Bildirimi: ${fullReport.title}`, 'info')
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'reports' },
+        async (payload) => {
+          const updatedReportId = payload.new.id
+          const fullReport = await getReportById(updatedReportId)
+          if (fullReport) {
+            setReports((prev) =>
+              prev.map((r) => (r.id === updatedReportId ? fullReport : r))
+            )
+            setRefreshKey((prev) => prev + 1)
+            // UPDATE işlemini gerçekleştiren kişi zaten kendi arayüzünde sonucu toast olarak görecektir.
+            // Diğer kullanıcılarda da sadece state anlık güncellenir.
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [addToast])
 
   const refreshReports = useCallback(async () => {
@@ -94,10 +134,19 @@ export default function DashboardPage() {
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* ── Başlık ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-surface-900 tracking-tight">
-            {isOfficial ? 'Yönetim Paneli' : 'Dashboard'}
-          </h1>
+        <div className="flex flex-col items-start gap-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-surface-900 tracking-tight">
+              {isOfficial ? 'Yönetim Paneli' : 'Dashboard'}
+            </h1>
+            <div className="flex items-center gap-2 px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold uppercase tracking-wider">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-600"></span>
+              </span>
+              LIVE / CANLI
+            </div>
+          </div>
           <p className="text-surface-500 text-sm mt-1">
             {isOfficial
               ? 'Şehirdeki tüm bildirimleri yönetin ve operasyon durumunu takip edin'

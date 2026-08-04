@@ -226,3 +226,32 @@ export async function getReportHistory(
     changer: Array.isArray(entry.changer) ? entry.changer[0] : entry.changer,
   })) as ReportHistoryWithProfile[]
 }
+
+/**
+ * Belirli bir raporu ilişkileriyle birlikte getirir. (Real-time eklemeler için)
+ */
+export async function getReportById(reportId: string): Promise<ReportWithRelations | null> {
+  const { data, error } = await supabase
+    .from('reports')
+    .select(`
+      *,
+      category:categories(*),
+      citizen:profiles!reports_citizen_id_fkey(*),
+      assigned_official:profiles!reports_assigned_official_id_fkey(*)
+    `)
+    .eq('id', reportId)
+    .single()
+
+  if (error || !data) {
+    console.error('Error fetching single report:', error)
+    return null
+  }
+
+  return {
+    ...data,
+    category: Array.isArray(data.category) ? data.category[0] : data.category,
+    citizen: Array.isArray(data.citizen) ? data.citizen[0] : data.citizen,
+    assigned_official: Array.isArray(data.assigned_official) ? data.assigned_official[0] : data.assigned_official,
+  } as ReportWithRelations
+}
+
