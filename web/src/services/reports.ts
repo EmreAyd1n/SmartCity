@@ -255,3 +255,92 @@ export async function getReportById(reportId: string): Promise<ReportWithRelatio
   } as ReportWithRelations
 }
 
+// ────────────────────────────────────────
+// Analiz ve Raporlama (Analytics)
+// ────────────────────────────────────────
+
+export interface AnalyticsData {
+  categoryDistribution: { name: string; value: number }[];
+  timeSeriesTrend: { date: string; count: number }[];
+  statusDistribution: { name: string; value: number }[];
+}
+
+export type TimeRangeFilter = '7days' | '30days' | 'all';
+
+/**
+ * Analiz sayfası için grafiklere uygun gruplanmış verileri döner.
+ */
+export async function getAnalyticsData(timeRange: TimeRangeFilter): Promise<AnalyticsData> {
+  let query = supabase.from('reports').select(`
+    created_at,
+    status,
+    category:categories(name)
+  `);
+
+  if (timeRange === '7days') {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    query = query.gte('created_at', d.toISOString());
+  } else if (timeRange === '30days') {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    query = query.gte('created_at', d.toISOString());
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching analytics data:', error);
+    throw new Error('Analiz verileri yüklenirken bir hata oluştu.');
+  }
+
+  const reports = data || [];
+
+  // Kategori Dağılımı
+  const categoryMap = new Map<string, number>();
+  // Zaman Serisi (Trend)
+  const trendMap = new Map<string, number>();
+  // Durum Dağılımı
+  const statusMap = new Map<string, number>();
+
+  reports.forEach((report: any) => {
+    // Kategori
+    const catName = report.category ? (Array.isArray(report.category) ? report.category[0]?.name : report.category?.name) : 'Diğer';
+    categoryMap.set(catName || 'Diğer', (categoryMap.get(catName || 'Diğer') || 0) + 1);
+
+    // Durum
+    const status = report.status || 'Bilinmiyor';
+    statusMap.set(status, (statusMap.get(status) || 0) + 1);
+
+    // Zaman
+    if (report.created_at) {
+      // YYYY-MM-DD formatında al
+      const dateStr = new Date(report.created_at).toISOString().split('T')[0];
+      trendMap.set(dateStr, (trendMap.get(dateStr) || 0) + 1);
+    }
+  });
+
+  const categoryDistribution = Array.from(categoryMap.entries()).map(([name, value]) => ({ name, value }));
+  
+  const statusDistribution = Array.from(statusMap.entries()).map(([name, value]) => {
+    // Status isimlerini Türkçeleştir (isteğe bağlı)
+    const statusLabels: Record<string, string> = {
+      'pending': 'Bekliyor',
+      'in_progress': 'İşlemde',
+      'resolved': 'Çözüldü',
+      'rejected': 'Reddedildi'
+    };
+    return { name: statusLabels[name] || name, value };
+  });
+
+  const timeSeriesTrend = Array.from(trendMap.entries())
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => a.date.localeCompare(b.date)); // Tarihe göre sırala
+
+  return {
+    categoryDistribution,
+    timeSeriesTrend,
+    statusDistribution
+  };
+}
+

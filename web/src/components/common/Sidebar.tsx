@@ -8,6 +8,7 @@ import {
   Building2,
   X,
   ChevronLeft,
+  PieChart,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -19,6 +20,7 @@ interface SidebarProps {
 const navItems = [
   { label: 'Dashboard', path: '/', icon: LayoutDashboard },
   { label: 'Bildirimler', path: '/reports', icon: FileText, badge: 12 },
+  { label: 'Analiz & Raporlar', path: '/analytics', icon: PieChart },
   { label: 'Harita', path: '/map', icon: MapPin },
   { label: 'Kullanıcılar', path: '/users', icon: Users },
   { label: 'Ayarlar', path: '/settings', icon: Settings },

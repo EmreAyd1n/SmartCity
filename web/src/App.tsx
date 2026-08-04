@@ -3,6 +3,7 @@ import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import CreateIssuePage from './pages/CreateIssuePage'
+import AnalyticsPage from './pages/AnalyticsPage'
 import MainLayout from './components/layout/MainLayout'
 import DashboardLayout from './components/common/DashboardLayout'
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -25,6 +26,16 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['citizen']}>
                   <CreateIssuePage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Sadece yetkililerin erişebileceği sayfalar */}
+            <Route 
+              path="analytics" 
+              element={
+                <ProtectedRoute allowedRoles={['official', 'admin']}>
+                  <AnalyticsPage />
                 </ProtectedRoute>
               } 
             />
