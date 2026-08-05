@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import CreateIssuePage from './pages/CreateIssuePage'
 import AnalyticsPage from './pages/AnalyticsPage'
+import ProfilePage from './pages/ProfilePage'
 import MainLayout from './components/layout/MainLayout'
 import DashboardLayout from './components/common/DashboardLayout'
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -19,6 +20,9 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<DashboardLayout />}>
             <Route index element={<DashboardPage />} />
+            
+            {/* Profil & Ayarlar */}
+            <Route path="profile" element={<ProfilePage />} />
             
             {/* Sadece vatandaşların erişebileceği sayfalar */}
             <Route 

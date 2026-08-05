@@ -23,7 +23,7 @@ const navItems = [
   { label: 'Analiz & Raporlar', path: '/analytics', icon: PieChart },
   { label: 'Harita', path: '/map', icon: MapPin },
   { label: 'Kullanıcılar', path: '/users', icon: Users },
-  { label: 'Ayarlar', path: '/settings', icon: Settings },
+  { label: 'Ayarlar', path: '/profile', icon: Settings },
 ]
 
 export default function Sidebar({ open, onClose }: SidebarProps) {

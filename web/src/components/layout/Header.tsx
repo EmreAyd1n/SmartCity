@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Building2, Menu, X, LogOut, User } from 'lucide-react';
+import { Building2, Menu, X, LogOut, User, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import Announcements from '../Announcements';
 
 const Header: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -53,18 +54,32 @@ const Header: React.FC = () => {
             {user ? (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-sm text-surface-600 font-medium">
-                  <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center">
-                    <User className="h-4 w-4" />
+                  <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center overflow-hidden">
+                    {user.user_metadata?.avatar_url ? (
+                      <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="h-4 w-4" />
+                    )}
                   </div>
                   <span className="hidden lg:block truncate max-w-[150px]">{user.email}</span>
                 </div>
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center gap-2 text-surface-500 hover:text-danger-600 transition-colors px-3 py-2 rounded-md hover:bg-danger-50"
-                  title="Çıkış Yap"
-                >
-                  <LogOut className="h-5 w-5" />
-                </button>
+                <div className="flex items-center gap-2 border-l border-surface-200 pl-4 ml-2">
+                  <Announcements />
+                  <Link
+                    to="/profile"
+                    className="flex items-center justify-center p-2 rounded-full text-surface-500 hover:text-primary-600 hover:bg-surface-100 transition-colors"
+                    title="Profil & Ayarlar"
+                  >
+                    <Settings className="h-5 w-5" />
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center justify-center p-2 rounded-full text-surface-500 hover:text-danger-600 hover:bg-danger-50 transition-colors"
+                    title="Çıkış Yap"
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="flex items-center space-x-3">
@@ -130,6 +145,14 @@ const Header: React.FC = () => {
                     <div className="text-xs font-medium text-surface-500 capitalize">{user.user_metadata?.role || 'Kullanıcı'}</div>
                   </div>
                 </div>
+                <Link
+                  to="/profile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex w-full items-center px-3 py-2 text-base font-medium text-surface-600 hover:text-primary-600 hover:bg-primary-50 rounded-md"
+                >
+                  <Settings className="h-5 w-5 mr-3" />
+                  Profil & Ayarlar
+                </Link>
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);

@@ -67,6 +67,17 @@ export interface ReportHistory {
   created_at: string
 }
 
+/** announcements tablosu — Sistem duyuruları */
+export interface Announcement {
+  id: string
+  title: string
+  content: string
+  author_id: string
+  is_published: boolean
+  created_at: string
+  updated_at: string
+}
+
 // ────────────────────────────────────────
 // Insert/Update DTOs (Data Transfer Objects)
 // ────────────────────────────────────────
@@ -87,6 +98,12 @@ export type ProfileUpdate = Partial<Omit<Profile, 'id' | 'email' | 'created_at'>
 
 /** Durum geçmişi oluşturma */
 export type ReportHistoryInsert = Omit<ReportHistory, 'id' | 'created_at'>
+
+/** Yeni duyuru oluşturma */
+export type AnnouncementInsert = Omit<Announcement, 'id' | 'created_at' | 'updated_at'>
+
+/** Duyuru güncelleme */
+export type AnnouncementUpdate = Partial<AnnouncementInsert>
 
 // ────────────────────────────────────────
 // İlişkisel / Birleştirilmiş Tipler
@@ -148,6 +165,11 @@ export interface Database {
         Row: ReportHistory
         Insert: ReportHistoryInsert & { id?: string; created_at?: string }
         Update: Partial<ReportHistoryInsert>
+      }
+      announcements: {
+        Row: Announcement
+        Insert: AnnouncementInsert & { id?: string; created_at?: string; updated_at?: string }
+        Update: AnnouncementUpdate
       }
     }
   }
