@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer,
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   BarChart, Bar
 } from 'recharts';
 import { Download, Loader2 } from 'lucide-react';
-import { getAnalyticsData, AnalyticsData, TimeRangeFilter } from '../services/reports';
+import { getAnalyticsData } from '../services/reports'
+import type { AnalyticsData, TimeRangeFilter } from '../services/reports';
 
 const COLORS = ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
 
@@ -29,7 +30,7 @@ export default function AnalyticsPage() {
     loadData();
   }, [timeRange]);
 
-  const handleDownloadCsv = () => {
+  const handleDownloadCsv = useCallback(() => {
     if (!data) return;
 
     // Türkçe karakterlerin doğru görünmesi için BOM (Byte Order Mark) ekliyoruz.
@@ -65,7 +66,11 @@ export default function AnalyticsPage() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  };
+  }, [data, timeRange]);
+
+  const categoryData = useMemo(() => data?.categoryDistribution || [], [data]);
+  const statusData = useMemo(() => data?.statusDistribution || [], [data]);
+  const timeSeriesData = useMemo(() => data?.timeSeriesTrend || [], [data]);
 
   if (loading && !data) {
     return (
@@ -87,13 +92,13 @@ export default function AnalyticsPage() {
     <div className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 tracking-tight">Analiz ve Raporlar</h1>
-          <p className="text-surface-500 mt-1">Sistemdeki bildirimlerin detaylı istatistikleri ve trendleri.</p>
+          <h1 className="text-2xl font-bold text-surface-900 dark:text-surface-100 tracking-tight">Analiz ve Raporlar</h1>
+          <p className="text-surface-500 dark:text-surface-400 mt-1">Sistemdeki bildirimlerin detaylı istatistikleri ve trendleri.</p>
         </div>
         
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <select 
-            className="flex-1 sm:flex-none border border-surface-200 bg-white text-surface-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5 shadow-sm transition-shadow" 
+            className="flex-1 sm:flex-none border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 text-surface-900 dark:text-surface-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5 shadow-sm transition-shadow" 
             value={timeRange} 
             onChange={(e) => setTimeRange(e.target.value as TimeRangeFilter)}
           >
@@ -104,7 +109,7 @@ export default function AnalyticsPage() {
           
           <button 
             onClick={handleDownloadCsv}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-white border border-surface-200 text-surface-700 hover:bg-surface-50 hover:text-surface-900 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 text-surface-700 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-700 hover:text-surface-900 dark:hover:text-surface-100 px-4 py-2.5 rounded-lg text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
           >
             <Download className="w-4 h-4" />
             CSV İndir
@@ -114,21 +119,21 @@ export default function AnalyticsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Kategori Dağılımı (Pie Chart) */}
-        <div className="bg-white rounded-xl shadow-sm border border-surface-100 p-6 flex flex-col">
-          <h2 className="text-lg font-semibold text-surface-800 mb-6">Kategori Dağılımı</h2>
+        <div className="bg-white dark:bg-surface-800 rounded-xl shadow-sm border border-surface-100 dark:border-surface-700 p-6 flex flex-col transition-colors duration-200">
+          <h2 className="text-lg font-semibold text-surface-800 dark:text-surface-100 mb-6">Kategori Dağılımı</h2>
           <div className="h-[300px] flex-1">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={data.categoryDistribution}
+                  data={categoryData}
                   innerRadius={70}
                   outerRadius={95}
                   paddingAngle={5}
                   dataKey="value"
                   labelLine={false}
-                  label={({ name, percent }) => percent > 0.05 ? `${name} ${(percent * 100).toFixed(0)}%` : null}
+                  label={({ name, percent }) => percent! > 0.05 ? `${name} ${(percent! * 100).toFixed(0)}%` : null}
                 >
-                  {data.categoryDistribution.map((_, index) => (
+                  {categoryData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} className="hover:opacity-80 transition-opacity outline-none" />
                   ))}
                 </Pie>
@@ -142,11 +147,11 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Durum Dağılımı (Bar Chart) */}
-        <div className="bg-white rounded-xl shadow-sm border border-surface-100 p-6 flex flex-col">
-          <h2 className="text-lg font-semibold text-surface-800 mb-6">Durum Dağılımı</h2>
+        <div className="bg-white dark:bg-surface-800 rounded-xl shadow-sm border border-surface-100 dark:border-surface-700 p-6 flex flex-col transition-colors duration-200">
+          <h2 className="text-lg font-semibold text-surface-800 dark:text-surface-100 mb-6">Durum Dağılımı</h2>
           <div className="h-[300px] flex-1">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.statusDistribution} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={statusData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} />
@@ -161,11 +166,11 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Bildirim Trendi (Area Chart) */}
-        <div className="bg-white rounded-xl shadow-sm border border-surface-100 p-6 lg:col-span-2">
-          <h2 className="text-lg font-semibold text-surface-800 mb-6">Bildirim Trendi</h2>
+        <div className="bg-white dark:bg-surface-800 rounded-xl shadow-sm border border-surface-100 dark:border-surface-700 p-6 lg:col-span-2 transition-colors duration-200">
+          <h2 className="text-lg font-semibold text-surface-800 dark:text-surface-100 mb-6">Bildirim Trendi</h2>
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.timeSeriesTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={timeSeriesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.25}/>
@@ -180,7 +185,7 @@ export default function AnalyticsPage() {
                   tick={{ fill: '#64748b', fontSize: 13 }} 
                   dy={10}
                   tickFormatter={(val) => {
-                    const date = new Date(val);
+                    const date = new Date(val as string);
                     return `${date.getDate()} ${date.toLocaleString('tr-TR', { month: 'short' })}`;
                   }}
                 />
@@ -188,7 +193,7 @@ export default function AnalyticsPage() {
                 <RechartsTooltip 
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
                   labelFormatter={(val) => {
-                    const date = new Date(val);
+                    const date = new Date(val as string);
                     return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
                   }}
                 />

@@ -10,7 +10,7 @@ interface InteractiveMapProps {
   onMarkerClick?: (report: ReportWithRelations) => void
 }
 
-export default function InteractiveMap({ reports, onMarkerClick }: InteractiveMapProps) {
+export default React.memo(function InteractiveMap({ reports, onMarkerClick }: InteractiveMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
   const popupRef = useRef<mapboxgl.Popup | null>(null)
@@ -114,7 +114,7 @@ export default function InteractiveMap({ reports, onMarkerClick }: InteractiveMa
           layers: ['clusters']
         });
         if (!features || !features.length) return;
-        const clusterId = features[0].properties?.cluster_id;
+        const clusterId = (features[0].properties as any)?.cluster_id;
         const source = map.current?.getSource('reports') as mapboxgl.GeoJSONSource;
         
         source.getClusterExpansionZoom(clusterId, (err, zoom) => {
@@ -147,19 +147,19 @@ export default function InteractiveMap({ reports, onMarkerClick }: InteractiveMa
         const statusInfo = statusColors[properties.status] || statusColors.pending;
 
         const popupContent = document.createElement('div');
-        popupContent.className = 'p-3 min-w-[240px] font-sans flex flex-col gap-3';
+        popupContent.className = 'p-3 min-w-[240px] font-sans flex flex-col gap-3 dark:bg-surface-900 rounded-xl';
         
         popupContent.innerHTML = `
-          ${properties.imageUrl ? \`<img src="\${properties.imageUrl}" class="w-full h-32 object-cover rounded-lg shadow-sm" alt="Report Image" />\` : ''}
+          ${properties.imageUrl ? `<img src="${properties.imageUrl}" class="w-full h-32 object-cover rounded-lg shadow-sm" alt="Report Image" />` : ''}
           <div>
-            <h3 class="font-bold text-base mb-1 text-surface-900">\${properties.title}</h3>
-            <p class="text-xs text-surface-500 mb-2">\${properties.categoryName}</p>
+            <h3 class="font-bold text-base mb-1 text-surface-900 dark:text-surface-100">${properties.title}</h3>
+            <p class="text-xs text-surface-500 dark:text-surface-400 mb-2">${properties.categoryName}</p>
             <span class="inline-block px-2.5 py-1 text-xs font-semibold rounded-full" 
-                  style="background-color: \${statusInfo.color}20; color: \${statusInfo.color}; border: 1px solid \${statusInfo.color}40">
-              \${statusInfo.text}
+                  style="background-color: ${statusInfo.color}20; color: ${statusInfo.color}; border: 1px solid ${statusInfo.color}40">
+              ${statusInfo.text}
             </span>
           </div>
-          <button id="btn-detail-\${properties.id}" class="w-full py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm">
+          <button id="btn-detail-${properties.id}" class="w-full py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm">
             Detayları Gör
           </button>
         `;
@@ -171,7 +171,7 @@ export default function InteractiveMap({ reports, onMarkerClick }: InteractiveMa
           .setDOMContent(popupContent)
           .addTo(map.current);
 
-        const detailBtn = popupContent.querySelector(\`#btn-detail-\${properties.id}\`);
+        const detailBtn = popupContent.querySelector(`#btn-detail-${properties.id}`);
         if (detailBtn) {
           detailBtn.addEventListener('click', () => {
             if (onMarkerClickRef.current) {
@@ -227,13 +227,13 @@ export default function InteractiveMap({ reports, onMarkerClick }: InteractiveMa
   }, [reports])
 
   return (
-    <div className="w-full h-full min-h-[500px] rounded-xl overflow-hidden border border-surface-200 shadow-sm relative group">
-      <div ref={mapContainer} className="absolute inset-0 w-full h-full bg-surface-100" />
+    <div className="w-full h-full min-h-[500px] rounded-xl overflow-hidden border border-surface-200 dark:border-surface-700 shadow-sm relative group transition-colors duration-200">
+      <div ref={mapContainer} className="absolute inset-0 w-full h-full bg-surface-100 dark:bg-surface-800 transition-colors duration-200" />
       {!map.current && (
-        <div className="absolute inset-0 flex items-center justify-center bg-surface-50/50 backdrop-blur-sm">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="absolute inset-0 flex items-center justify-center bg-surface-50/50 dark:bg-surface-900/50 backdrop-blur-sm transition-colors duration-200">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
         </div>
       )}
     </div>
   )
-}
+})

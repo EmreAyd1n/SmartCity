@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Building2, Menu, X, LogOut, User, Settings } from 'lucide-react';
+import { Building2, Menu, X, LogOut, User, Settings, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import Announcements from '../Announcements';
 
 const Header: React.FC = () => {
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -22,7 +24,7 @@ const Header: React.FC = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full glass-card border-b border-surface-200">
+    <header className="sticky top-0 z-50 w-full glass-card border-b border-surface-200 dark:border-surface-700 transition-colors duration-200">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           
@@ -32,7 +34,7 @@ const Header: React.FC = () => {
               <div className="bg-primary-600 p-2 rounded-lg">
                 <Building2 className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-surface-900 tracking-tight">SmartCity</span>
+              <span className="text-xl font-bold text-surface-900 dark:text-surface-100 tracking-tight">SmartCity</span>
             </Link>
           </div>
 
@@ -42,7 +44,7 @@ const Header: React.FC = () => {
               <Link
                 key={link.name}
                 to={link.path}
-                className="text-surface-600 hover:text-primary-600 font-medium transition-colors"
+                className="text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors"
               >
                 {link.name}
               </Link>
@@ -53,7 +55,7 @@ const Header: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-sm text-surface-600 font-medium">
+                <div className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-300 font-medium">
                   <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center overflow-hidden">
                     {user.user_metadata?.avatar_url ? (
                       <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
@@ -63,18 +65,25 @@ const Header: React.FC = () => {
                   </div>
                   <span className="hidden lg:block truncate max-w-[150px]">{user.email}</span>
                 </div>
-                <div className="flex items-center gap-2 border-l border-surface-200 pl-4 ml-2">
+                <div className="flex items-center gap-2 border-l border-surface-200 dark:border-surface-700 pl-4 ml-2">
                   <Announcements />
+                  <button
+                    onClick={toggleTheme}
+                    className="flex items-center justify-center p-2 rounded-full text-surface-500 hover:text-primary-600 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+                    title="Temayı Değiştir"
+                  >
+                    {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                  </button>
                   <Link
                     to="/profile"
-                    className="flex items-center justify-center p-2 rounded-full text-surface-500 hover:text-primary-600 hover:bg-surface-100 transition-colors"
+                    className="flex items-center justify-center p-2 rounded-full text-surface-500 hover:text-primary-600 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
                     title="Profil & Ayarlar"
                   >
                     <Settings className="h-5 w-5" />
                   </Link>
                   <button
                     onClick={handleSignOut}
-                    className="flex items-center justify-center p-2 rounded-full text-surface-500 hover:text-danger-600 hover:bg-danger-50 transition-colors"
+                    className="flex items-center justify-center p-2 rounded-full text-surface-500 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/30 transition-colors"
                     title="Çıkış Yap"
                   >
                     <LogOut className="h-5 w-5" />
@@ -83,9 +92,16 @@ const Header: React.FC = () => {
               </div>
             ) : (
               <div className="flex items-center space-x-3">
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-full text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+                  title="Temayı Değiştir"
+                >
+                  {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                </button>
                 <Link
                   to="/login"
-                  className="text-surface-700 hover:text-primary-600 font-medium px-3 py-2 transition-colors"
+                  className="text-surface-700 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium px-3 py-2 transition-colors"
                 >
                   Giriş Yap
                 </Link>
@@ -103,7 +119,7 @@ const Header: React.FC = () => {
           <div className="flex items-center md:hidden">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-surface-400 hover:text-surface-500 hover:bg-surface-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
+              className="inline-flex items-center justify-center p-2 rounded-md text-surface-400 hover:text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 transition-colors"
             >
               <span className="sr-only">Menüyü aç</span>
               {isMobileMenuOpen ? (
@@ -118,20 +134,20 @@ const Header: React.FC = () => {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-surface-200 shadow-lg absolute w-full">
+        <div className="md:hidden bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700 shadow-lg absolute w-full transition-colors duration-200">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.path}
-                className="block px-3 py-2 rounded-md text-base font-medium text-surface-700 hover:text-primary-600 hover:bg-primary-50"
+                className="block px-3 py-2 rounded-md text-base font-medium text-surface-700 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {link.name}
               </Link>
             ))}
           </div>
-          <div className="pt-4 pb-3 border-t border-surface-200">
+          <div className="pt-4 pb-3 border-t border-surface-200 dark:border-surface-700">
             {user ? (
               <div className="px-4 space-y-3">
                 <div className="flex items-center px-3">
@@ -141,14 +157,21 @@ const Header: React.FC = () => {
                     </div>
                   </div>
                   <div className="ml-3">
-                    <div className="text-sm font-medium text-surface-800 truncate">{user.email}</div>
-                    <div className="text-xs font-medium text-surface-500 capitalize">{user.user_metadata?.role || 'Kullanıcı'}</div>
+                    <div className="text-sm font-medium text-surface-800 dark:text-surface-100 truncate">{user.email}</div>
+                    <div className="text-xs font-medium text-surface-500 dark:text-surface-400 capitalize">{user.user_metadata?.role || 'Kullanıcı'}</div>
                   </div>
                 </div>
+                <button
+                  onClick={toggleTheme}
+                  className="flex w-full items-center px-3 py-2 text-base font-medium text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-md transition-colors"
+                >
+                  {theme === 'dark' ? <Sun className="h-5 w-5 mr-3" /> : <Moon className="h-5 w-5 mr-3" />}
+                  Temayı Değiştir
+                </button>
                 <Link
                   to="/profile"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex w-full items-center px-3 py-2 text-base font-medium text-surface-600 hover:text-primary-600 hover:bg-primary-50 rounded-md"
+                  className="flex w-full items-center px-3 py-2 text-base font-medium text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-md transition-colors"
                 >
                   <Settings className="h-5 w-5 mr-3" />
                   Profil & Ayarlar
@@ -158,7 +181,7 @@ const Header: React.FC = () => {
                     setIsMobileMenuOpen(false);
                     handleSignOut();
                   }}
-                  className="flex w-full items-center px-3 py-2 text-base font-medium text-surface-600 hover:text-danger-600 hover:bg-danger-50 rounded-md"
+                  className="flex w-full items-center px-3 py-2 text-base font-medium text-surface-600 dark:text-surface-300 hover:text-danger-600 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/30 rounded-md transition-colors"
                 >
                   <LogOut className="h-5 w-5 mr-3" />
                   Çıkış Yap
@@ -169,7 +192,7 @@ const Header: React.FC = () => {
                 <Link
                   to="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full text-center px-4 py-2 border border-surface-300 shadow-sm text-base font-medium rounded-md text-surface-700 bg-white hover:bg-surface-50"
+                  className="block w-full text-center px-4 py-2 border border-surface-300 dark:border-surface-600 shadow-sm text-base font-medium rounded-md text-surface-700 dark:text-surface-300 bg-white dark:bg-surface-800 hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors"
                 >
                   Giriş Yap
                 </Link>

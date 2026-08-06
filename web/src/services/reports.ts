@@ -49,7 +49,7 @@ export async function getReports(): Promise<ReportWithRelations[]> {
   }
 
   // Tip uyumluluğunu sağlamak için fallback kontrolleri
-  return (data || []).map((report) => ({
+  return (data as any[] || []).map((report) => ({
     ...report,
     category: Array.isArray(report.category) ? report.category[0] : report.category,
     citizen: Array.isArray(report.citizen) ? report.citizen[0] : report.citizen,
@@ -221,7 +221,7 @@ export async function getReportHistory(
     throw new Error('Rapor geçmişi yüklenirken bir hata oluştu.')
   }
 
-  return (data || []).map((entry) => ({
+  return (data as any[] || []).map((entry) => ({
     ...entry,
     changer: Array.isArray(entry.changer) ? entry.changer[0] : entry.changer,
   })) as ReportHistoryWithProfile[]
@@ -303,7 +303,7 @@ export async function getAnalyticsData(timeRange: TimeRangeFilter): Promise<Anal
   // Durum Dağılımı
   const statusMap = new Map<string, number>();
 
-  reports.forEach((report: any) => {
+  (reports as any[]).forEach((report: any) => {
     // Kategori
     const catName = report.category ? (Array.isArray(report.category) ? report.category[0]?.name : report.category?.name) : 'Diğer';
     categoryMap.set(catName || 'Diğer', (categoryMap.get(catName || 'Diğer') || 0) + 1);

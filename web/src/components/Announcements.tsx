@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Plus, X, Loader2, Megaphone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { fetchAnnouncements, createAnnouncement } from '../services/announcements';
-import { Announcement } from '../types';
+import type { Announcement } from "../types";
 import { useToast } from '../context/ToastContext';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';

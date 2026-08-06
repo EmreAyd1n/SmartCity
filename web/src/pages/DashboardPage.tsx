@@ -45,6 +45,7 @@ export default function DashboardPage() {
         addToast(error.message || 'Veriler yüklenirken hata oluştu.', 'error')
       } finally {
         setLoading(false)
+      }
     }
     fetchData()
   }, [addToast])
@@ -116,7 +117,7 @@ export default function DashboardPage() {
       // İstatistik kartlarını da yenile
       setRefreshKey(prev => prev + 1)
 
-      addToast('Durum başarıyla güncellendi.', 'success')
+      addToast('Durum başarıyla güncellendi.', 'success' as any)
     } catch (error: any) {
       addToast(error.message || 'Durum güncellenirken hata oluştu.', 'error')
     }

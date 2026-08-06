@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, Github, Twitter, Mail } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin } from 'lucide-react';
 
 const Footer: React.FC = () => {
   return (
@@ -19,14 +19,6 @@ const Footer: React.FC = () => {
               Şehrinizi daha yaşanabilir kılmak için vatandaşlar ve yerel yönetimleri bir araya getiren akıllı şehir platformu.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-surface-400 hover:text-primary-400 transition-colors">
-                <span className="sr-only">Twitter</span>
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-surface-400 hover:text-primary-400 transition-colors">
-                <span className="sr-only">GitHub</span>
-                <Github className="h-5 w-5" />
-              </a>
               <a href="#" className="text-surface-400 hover:text-primary-400 transition-colors">
                 <span className="sr-only">Email</span>
                 <Mail className="h-5 w-5" />

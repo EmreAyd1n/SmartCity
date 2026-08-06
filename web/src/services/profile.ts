@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase/client';
-import { ProfileUpdate } from '../types';
+import type { ProfileUpdate } from '../types';
 
 /**
  * Kullanıcı profil bilgilerini günceller

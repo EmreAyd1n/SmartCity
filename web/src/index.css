@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
 
 /* ============================================================
    Civic Reporter — Custom Theme (Tailwind CSS v4)
@@ -86,7 +87,7 @@
   }
 
   body {
-    @apply bg-surface-50 text-surface-900 font-sans;
+    @apply bg-surface-50 text-surface-900 font-sans transition-colors duration-200 dark:bg-surface-950 dark:text-surface-50;
   }
 
   /* Custom scrollbar */
@@ -113,7 +114,11 @@
    ============================================================ */
 @layer components {
   .glass-card {
-    @apply bg-white/80 backdrop-blur-sm border border-surface-200 rounded-[var(--radius-card)] shadow-[var(--shadow-card)];
+    @apply bg-white/80 backdrop-blur-sm border border-surface-200 rounded-[var(--radius-card)] shadow-[var(--shadow-card)] transition-colors duration-200;
+  }
+  
+  .dark .glass-card {
+    @apply bg-surface-800/80 border-surface-700 shadow-[var(--shadow-card)];
   }
 
   .glass-card-dark {

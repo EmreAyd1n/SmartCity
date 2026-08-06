@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase/client';
-import { Announcement, AnnouncementInsert, AnnouncementUpdate } from '../types';
+import type { Announcement, AnnouncementInsert, AnnouncementUpdate } from '../types';
 
 /**
  * Tüm duyuruları getirir, yayınlanmış ve tarihe göre azalan sırada.
