@@ -4,7 +4,7 @@ import { Building2, Menu, X, LogOut, User, Settings, Sun, Moon } from 'lucide-re
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import Announcements from '../Announcements';
-
+import InstallPrompt from '../pwa/InstallPrompt';
 const Header: React.FC = () => {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -66,6 +66,7 @@ const Header: React.FC = () => {
                   <span className="hidden lg:block truncate max-w-[150px]">{user.email}</span>
                 </div>
                 <div className="flex items-center gap-2 border-l border-surface-200 dark:border-surface-700 pl-4 ml-2">
+                  <InstallPrompt />
                   <Announcements />
                   <button
                     onClick={toggleTheme}
@@ -99,6 +100,7 @@ const Header: React.FC = () => {
                 >
                   {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </button>
+                <InstallPrompt />
                 <Link
                   to="/login"
                   className="text-surface-700 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium px-3 py-2 transition-colors"
