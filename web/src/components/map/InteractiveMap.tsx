@@ -1,7 +1,9 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import type { ReportWithRelations } from '../../types'
+import { useIoTSimulator } from '../../services/iotSimulator'
+import { Activity } from 'lucide-react'
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
@@ -14,7 +16,11 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
   const popupRef = useRef<mapboxgl.Popup | null>(null)
+  const iotPopupRef = useRef<mapboxgl.Popup | null>(null)
   const onMarkerClickRef = useRef(onMarkerClick)
+  
+  const sensors = useIoTSimulator()
+  const [showSensors, setShowSensors] = useState(false)
 
   useEffect(() => {
     onMarkerClickRef.current = onMarkerClick
@@ -26,7 +32,7 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: [28.9784, 41.0082], // Istanbul Merkez
+      center: [39.2228, 38.6744], // Elazığ Merkez
       zoom: 12
     })
 
@@ -35,6 +41,7 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
     map.current.on('load', () => {
       if (!map.current) return;
 
+      // ── REPORTS SOURCE & LAYERS ──
       map.current.addSource('reports', {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] },
@@ -108,11 +115,61 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
         }
       });
 
-      // Cluster click to zoom
+      // ── IOT SENSORS SOURCE & LAYERS ──
+      map.current.addSource('iot-sensors', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] }
+      });
+
+      // Dış hale (pulse effect for critical)
+      map.current.addLayer({
+        id: 'iot-sensors-halo',
+        type: 'circle',
+        source: 'iot-sensors',
+        paint: {
+          'circle-radius': [
+            'match',
+            ['get', 'status'],
+            'critical', 20,
+            'warning', 15,
+            0
+          ],
+          'circle-color': [
+            'match',
+            ['get', 'status'],
+            'critical', '#ef4444',
+            'warning', '#f59e0b',
+            'transparent'
+          ],
+          'circle-opacity': 0.3
+        }
+      });
+
+      // İç nokta
+      map.current.addLayer({
+        id: 'iot-sensors-point',
+        type: 'circle',
+        source: 'iot-sensors',
+        paint: {
+          'circle-color': [
+            'match',
+            ['get', 'status'],
+            'critical', '#ef4444',
+            'warning', '#f59e0b',
+            '#10b981' // normal
+          ],
+          'circle-radius': 8,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#fff'
+        }
+      });
+
+
+      // ── INTERACTIONS ──
+
+      // Cluster click
       map.current.on('click', 'clusters', (e) => {
-        const features = map.current?.queryRenderedFeatures(e.point, {
-          layers: ['clusters']
-        });
+        const features = map.current?.queryRenderedFeatures(e.point, { layers: ['clusters'] });
         if (!features || !features.length) return;
         const clusterId = (features[0].properties as any)?.cluster_id;
         const source = map.current?.getSource('reports') as mapboxgl.GeoJSONSource;
@@ -120,14 +177,11 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
         source.getClusterExpansionZoom(clusterId, (err, zoom) => {
           if (err) return;
           const coords = (features[0].geometry as any).coordinates;
-          map.current?.easeTo({
-            center: coords,
-            zoom: zoom
-          });
+          map.current?.easeTo({ center: coords, zoom: zoom });
         });
       });
 
-      // Point click to show popup
+      // Report point click
       map.current.on('click', 'unclustered-point', (e) => {
         if (!e.features || !e.features.length || !map.current) return;
         const feature = e.features[0];
@@ -148,7 +202,6 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
 
         const popupContent = document.createElement('div');
         popupContent.className = 'p-3 min-w-[240px] font-sans flex flex-col gap-3 dark:bg-surface-900 rounded-xl';
-        
         popupContent.innerHTML = `
           ${properties.imageUrl ? `<img src="${properties.imageUrl}" class="w-full h-32 object-cover rounded-lg shadow-sm" alt="Report Image" />` : ''}
           <div>
@@ -165,7 +218,6 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
         `;
 
         if (popupRef.current) popupRef.current.remove();
-
         popupRef.current = new mapboxgl.Popup({ offset: 10, maxWidth: '300px' })
           .setLngLat(coords)
           .setDOMContent(popupContent)
@@ -175,12 +227,55 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
         if (detailBtn) {
           detailBtn.addEventListener('click', () => {
             if (onMarkerClickRef.current) {
-              const report = JSON.parse(properties.reportStr);
-              onMarkerClickRef.current(report);
+              onMarkerClickRef.current(JSON.parse(properties.reportStr));
             }
             if (popupRef.current) popupRef.current.remove();
           });
         }
+      });
+
+      // IoT point click
+      map.current.on('click', 'iot-sensors-point', (e) => {
+        if (!e.features || !e.features.length || !map.current) return;
+        const feature = e.features[0];
+        const coords = (feature.geometry as any).coordinates.slice();
+        const properties = feature.properties as any;
+        
+        while (Math.abs(e.lngLat.lng - coords[0]) > 180) {
+          coords[0] += e.lngLat.lng > coords[0] ? 360 : -360;
+        }
+
+        const popupContent = document.createElement('div');
+        popupContent.className = 'p-3 min-w-[200px] font-sans flex flex-col gap-2 dark:bg-surface-900 rounded-xl';
+        
+        const statusColors: any = {
+          critical: { color: '#ef4444', text: 'Kritik' },
+          warning: { color: '#f59e0b', text: 'Uyarı' },
+          normal: { color: '#10b981', text: 'Normal' }
+        };
+        const sInfo = statusColors[properties.status] || statusColors.normal;
+
+        popupContent.innerHTML = `
+          <div class="flex items-center gap-2 mb-1">
+             <div class="p-1.5 rounded-md" style="background-color: ${sInfo.color}20; color: ${sInfo.color};">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+             </div>
+             <h3 class="font-bold text-sm text-surface-900 dark:text-surface-100">${properties.name}</h3>
+          </div>
+          <div class="flex justify-between items-center mt-2">
+            <span class="text-2xl font-black" style="color: ${sInfo.color}">${properties.value} <span class="text-xs font-normal text-surface-500">${properties.unit}</span></span>
+            <span class="inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full uppercase" style="background-color: ${sInfo.color}20; color: ${sInfo.color};">
+              ${sInfo.text}
+            </span>
+          </div>
+          <p class="text-[10px] text-surface-400 mt-1 text-right">Son günc.: ${new Date(properties.lastUpdated).toLocaleTimeString()}</p>
+        `;
+
+        if (iotPopupRef.current) iotPopupRef.current.remove();
+        iotPopupRef.current = new mapboxgl.Popup({ offset: 10, maxWidth: '250px' })
+          .setLngLat(coords)
+          .setDOMContent(popupContent)
+          .addTo(map.current);
       });
 
       // Hover effects
@@ -191,13 +286,15 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
       map.current.on('mouseleave', 'clusters', clearPointer);
       map.current.on('mouseenter', 'unclustered-point', setPointer);
       map.current.on('mouseleave', 'unclustered-point', clearPointer);
+      map.current.on('mouseenter', 'iot-sensors-point', setPointer);
+      map.current.on('mouseleave', 'iot-sensors-point', clearPointer);
     });
 
   }, [])
 
+  // Sync Reports Data
   useEffect(() => {
     if (!map.current) return;
-    
     const updateData = () => {
       const source = map.current?.getSource('reports') as mapboxgl.GeoJSONSource;
       if (source) {
@@ -218,17 +315,63 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
         });
       }
     };
-
-    if (map.current.isStyleLoaded()) {
-      updateData();
-    } else {
-      map.current.once('load', updateData);
-    }
+    if (map.current.isStyleLoaded()) updateData();
+    else map.current.once('load', updateData);
   }, [reports])
+
+  // Sync IoT Sensors Data
+  useEffect(() => {
+    if (!map.current) return;
+    const updateIoTData = () => {
+      const source = map.current?.getSource('iot-sensors') as mapboxgl.GeoJSONSource;
+      if (source) {
+        if (!showSensors) {
+          source.setData({ type: 'FeatureCollection', features: [] });
+        } else {
+          source.setData({
+            type: 'FeatureCollection',
+            features: sensors.map(s => ({
+              type: 'Feature',
+              geometry: { type: 'Point', coordinates: [s.location[1], s.location[0]] }, // mapbox: lng, lat
+              properties: {
+                id: s.id,
+                name: s.name,
+                type: s.type,
+                value: s.value,
+                unit: s.unit,
+                status: s.status,
+                lastUpdated: s.lastUpdated
+              }
+            }))
+          });
+        }
+      }
+    };
+    if (map.current.isStyleLoaded()) updateIoTData();
+    else map.current.once('load', updateIoTData);
+  }, [sensors, showSensors])
 
   return (
     <div className="w-full h-full min-h-[500px] rounded-xl overflow-hidden border border-surface-200 dark:border-surface-700 shadow-sm relative group transition-colors duration-200">
       <div ref={mapContainer} className="absolute inset-0 w-full h-full bg-surface-100 dark:bg-surface-800 transition-colors duration-200" />
+      
+      {/* IoT Toggle Control */}
+      <div className="absolute top-4 left-4 z-10 bg-white/90 dark:bg-surface-800/90 backdrop-blur-sm p-2 rounded-lg shadow-sm border border-surface-200 dark:border-surface-700 flex items-center gap-3">
+        <div className="flex items-center gap-2">
+           <Activity className="w-4 h-4 text-primary-500" />
+           <span className="text-sm font-medium text-surface-900 dark:text-surface-100">Sensör Ağı</span>
+        </div>
+        <button
+          onClick={() => setShowSensors(prev => !prev)}
+          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${showSensors ? 'bg-primary-500' : 'bg-surface-300 dark:bg-surface-600'}`}
+        >
+          <span className="sr-only">Toggle IoT Sensors</span>
+          <span
+            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition duration-200 ease-in-out ${showSensors ? 'translate-x-4.5' : 'translate-x-1'}`}
+          />
+        </button>
+      </div>
+
       {!map.current && (
         <div className="absolute inset-0 flex items-center justify-center bg-surface-50/50 dark:bg-surface-900/50 backdrop-blur-sm transition-colors duration-200">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
