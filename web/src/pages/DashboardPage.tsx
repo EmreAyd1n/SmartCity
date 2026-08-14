@@ -17,6 +17,8 @@ import CreateReportModal from '../components/dashboard/CreateReportModal'
 import StatsOverview from '../components/dashboard/StatsOverview'
 import IoTSensorWidget from '../components/dashboard/IoTSensorWidget'
 import InteractiveMap from '../components/map/InteractiveMap'
+import IoTSensorDetailModal from '../components/dashboard/IoTSensorDetailModal'
+import type { IoTSensor } from '../types/iot'
 
 export default function DashboardPage() {
   const { profile } = useAuth()
@@ -29,6 +31,7 @@ export default function DashboardPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [viewMode, setViewMode] = useState<'list' | 'map'>('map')
+  const [selectedIoTSensor, setSelectedIoTSensor] = useState<IoTSensor | null>(null)
 
   const isOfficial = profile?.role === 'official' || profile?.role === 'admin'
 
@@ -204,6 +207,7 @@ export default function DashboardPage() {
                 <InteractiveMap 
                   reports={reports} 
                   onMarkerClick={(report) => setSelectedReport(report)} 
+                  onIoTSensorClick={(sensor) => setSelectedIoTSensor(sensor)}
                 />
               </div>
             ) : (
@@ -221,7 +225,7 @@ export default function DashboardPage() {
 
         {/* ── IoT Sensor Widget ── */}
         <div className="xl:col-span-1 h-[500px] xl:h-auto">
-          <IoTSensorWidget />
+          <IoTSensorWidget onSensorClick={(sensor) => setSelectedIoTSensor(sensor)} />
         </div>
       </div>
 
@@ -236,6 +240,12 @@ export default function DashboardPage() {
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={refreshReports}
         categories={categories}
+      />
+
+      <IoTSensorDetailModal
+        isOpen={!!selectedIoTSensor}
+        onClose={() => setSelectedIoTSensor(null)}
+        sensor={selectedIoTSensor}
       />
     </div>
   )

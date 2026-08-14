@@ -11,6 +11,7 @@ export interface IoTSensor {
   threshold: { warning: number; critical: number };
   status: SensorStatus;
   lastUpdated: string;
+  history: { timestamp: string; value: number }[];
 }
 
 export const initialMockSensors: IoTSensor[] = [
@@ -24,6 +25,7 @@ export const initialMockSensors: IoTSensor[] = [
     threshold: { warning: 100, critical: 150 },
     status: 'normal',
     lastUpdated: new Date().toISOString(),
+    history: [],
   },
   {
     id: 'sensor-aqi-2',
@@ -35,6 +37,7 @@ export const initialMockSensors: IoTSensor[] = [
     threshold: { warning: 100, critical: 150 },
     status: 'normal',
     lastUpdated: new Date().toISOString(),
+    history: [],
   },
   {
     id: 'sensor-waste-1',
@@ -46,6 +49,7 @@ export const initialMockSensors: IoTSensor[] = [
     threshold: { warning: 75, critical: 90 },
     status: 'warning',
     lastUpdated: new Date().toISOString(),
+    history: [],
   },
   {
     id: 'sensor-waste-2',
@@ -57,6 +61,7 @@ export const initialMockSensors: IoTSensor[] = [
     threshold: { warning: 75, critical: 90 },
     status: 'normal',
     lastUpdated: new Date().toISOString(),
+    history: [],
   },
   {
     id: 'sensor-noise-1',
@@ -68,6 +73,7 @@ export const initialMockSensors: IoTSensor[] = [
     threshold: { warning: 70, critical: 85 },
     status: 'normal',
     lastUpdated: new Date().toISOString(),
+    history: [],
   },
   {
     id: 'sensor-noise-2',
@@ -79,6 +85,7 @@ export const initialMockSensors: IoTSensor[] = [
     threshold: { warning: 70, critical: 85 },
     status: 'warning',
     lastUpdated: new Date().toISOString(),
+    history: [],
   },
   {
     id: 'sensor-water-1',
@@ -90,6 +97,7 @@ export const initialMockSensors: IoTSensor[] = [
     threshold: { warning: 20, critical: 40 },
     status: 'normal',
     lastUpdated: new Date().toISOString(),
+    history: [],
   },
   {
     id: 'sensor-water-2',
@@ -101,5 +109,6 @@ export const initialMockSensors: IoTSensor[] = [
     threshold: { warning: 20, critical: 40 },
     status: 'normal',
     lastUpdated: new Date().toISOString(),
+    history: [],
   }
 ];

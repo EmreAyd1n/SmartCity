@@ -1,7 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useIoTSimulator } from '../../services/iotSimulator';
-import { Activity, AlertTriangle, Wind, Trash2, Volume2, Droplets } from 'lucide-react';
-import type { IoTSensor, SensorType } from '../../types';
+import { Activity, AlertTriangle, Wind, Trash2, Volume2, Droplets, Filter } from 'lucide-react';
+import type { IoTSensor, SensorType, SensorStatus } from '../../types/iot';
+
+interface IoTSensorWidgetProps {
+  onSensorClick?: (sensor: IoTSensor) => void;
+}
 
 const getIconForType = (type: SensorType) => {
   switch (type) {
@@ -21,8 +25,10 @@ const getStatusColor = (status: string) => {
   }
 };
 
-export default function IoTSensorWidget() {
+export default function IoTSensorWidget({ onSensorClick }: IoTSensorWidgetProps) {
   const sensors = useIoTSimulator();
+  const [filterType, setFilterType] = useState<SensorType | 'all'>('all');
+  const [filterStatus, setFilterStatus] = useState<SensorStatus | 'all'>('all');
 
   const { criticalCount, warningCount } = useMemo(() => {
     return {
@@ -59,10 +65,42 @@ export default function IoTSensorWidget() {
         </div>
       </div>
       
+      <div className="px-4 py-2 border-b border-surface-200 dark:border-surface-700 bg-surface-50/50 dark:bg-surface-800/30 flex flex-col gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+          <Filter className="w-3.5 h-3.5 text-surface-400 shrink-0" />
+          {(['all', 'aqi', 'waste', 'noise', 'water'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setFilterType(t)}
+              className={`px-2 py-1 text-xs font-medium rounded-md whitespace-nowrap transition-colors ${filterType === t ? 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-400' : 'text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:bg-surface-700'}`}
+            >
+              {t === 'all' ? 'Tümü' : t === 'aqi' ? 'Hava' : t === 'waste' ? 'Çöp' : t === 'noise' ? 'Ses' : 'Su'}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+          {(['all', 'normal', 'warning', 'critical'] as const).map(s => (
+            <button
+              key={s}
+              onClick={() => setFilterStatus(s)}
+              className={`px-2 py-1 text-[10px] uppercase font-bold rounded-md whitespace-nowrap transition-colors ${filterStatus === s ? 'bg-surface-200 text-surface-900 dark:bg-surface-600 dark:text-surface-100' : 'text-surface-500 hover:bg-surface-100 dark:text-surface-400 dark:hover:bg-surface-700'}`}
+            >
+              {s === 'all' ? 'Tümü' : s === 'normal' ? 'Normal' : s === 'warning' ? 'Uyarı' : 'Kritik'}
+            </button>
+          ))}
+        </div>
+      </div>
+      
       <div className="p-2 overflow-y-auto custom-scrollbar flex-1">
         <div className="space-y-1">
-          {sensors.map((sensor) => (
-            <div key={sensor.id} className="flex items-center justify-between p-3 hover:bg-surface-50 dark:hover:bg-surface-700/50 rounded-lg transition-colors group">
+          {sensors
+            .filter(s => (filterType === 'all' || s.type === filterType) && (filterStatus === 'all' || s.status === filterStatus))
+            .map((sensor) => (
+            <div 
+              key={sensor.id} 
+              onClick={() => onSensorClick?.(sensor)}
+              className="flex items-center justify-between p-3 hover:bg-surface-50 dark:hover:bg-surface-700/50 rounded-lg transition-colors group cursor-pointer"
+            >
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${getStatusColor(sensor.status)} transition-colors`}>
                   {getIconForType(sensor.type)}

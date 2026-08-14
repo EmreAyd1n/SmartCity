@@ -2,29 +2,35 @@ import React, { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import type { ReportWithRelations } from '../../types'
+import type { IoTSensor, SensorType, SensorStatus } from '../../types/iot'
 import { useIoTSimulator } from '../../services/iotSimulator'
-import { Activity } from 'lucide-react'
+import { Activity, Filter } from 'lucide-react'
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 interface InteractiveMapProps {
   reports: ReportWithRelations[]
   onMarkerClick?: (report: ReportWithRelations) => void
+  onIoTSensorClick?: (sensor: IoTSensor) => void
 }
 
-export default React.memo(function InteractiveMap({ reports, onMarkerClick }: InteractiveMapProps) {
+export default React.memo(function InteractiveMap({ reports, onMarkerClick, onIoTSensorClick }: InteractiveMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
   const popupRef = useRef<mapboxgl.Popup | null>(null)
   const iotPopupRef = useRef<mapboxgl.Popup | null>(null)
   const onMarkerClickRef = useRef(onMarkerClick)
+  const onIoTSensorClickRef = useRef(onIoTSensorClick)
   
   const sensors = useIoTSimulator()
   const [showSensors, setShowSensors] = useState(false)
+  const [filterType, setFilterType] = useState<SensorType | 'all'>('all')
+  const [filterStatus, setFilterStatus] = useState<SensorStatus | 'all'>('all')
 
   useEffect(() => {
     onMarkerClickRef.current = onMarkerClick
-  }, [onMarkerClick])
+    onIoTSensorClickRef.current = onIoTSensorClick
+  }, [onMarkerClick, onIoTSensorClick])
 
   useEffect(() => {
     if (map.current || !mapContainer.current) return
@@ -269,6 +275,9 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
             </span>
           </div>
           <p class="text-[10px] text-surface-400 mt-1 text-right">Son günc.: ${new Date(properties.lastUpdated).toLocaleTimeString()}</p>
+          <button id="btn-iot-detail-${properties.id}" class="mt-2 w-full py-1.5 bg-surface-100 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 hover:bg-surface-200 dark:hover:bg-surface-700 text-surface-900 dark:text-surface-100 rounded-md text-xs font-semibold transition-colors">
+            Detayları Gör
+          </button>
         `;
 
         if (iotPopupRef.current) iotPopupRef.current.remove();
@@ -276,6 +285,16 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
           .setLngLat(coords)
           .setDOMContent(popupContent)
           .addTo(map.current);
+          
+        const detailBtn = popupContent.querySelector(`#btn-iot-detail-${properties.id}`);
+        if (detailBtn) {
+          detailBtn.addEventListener('click', () => {
+            if (onIoTSensorClickRef.current) {
+              onIoTSensorClickRef.current(JSON.parse(properties.sensorStr));
+            }
+            if (iotPopupRef.current) iotPopupRef.current.remove();
+          });
+        }
       });
 
       // Hover effects
@@ -330,7 +349,9 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
         } else {
           source.setData({
             type: 'FeatureCollection',
-            features: sensors.map(s => ({
+            features: sensors
+              .filter(s => (filterType === 'all' || s.type === filterType) && (filterStatus === 'all' || s.status === filterStatus))
+              .map(s => ({
               type: 'Feature',
               geometry: { type: 'Point', coordinates: [s.location[1], s.location[0]] }, // mapbox: lng, lat
               properties: {
@@ -340,7 +361,8 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
                 value: s.value,
                 unit: s.unit,
                 status: s.status,
-                lastUpdated: s.lastUpdated
+                lastUpdated: s.lastUpdated,
+                sensorStr: JSON.stringify(s)
               }
             }))
           });
@@ -349,27 +371,56 @@ export default React.memo(function InteractiveMap({ reports, onMarkerClick }: In
     };
     if (map.current.isStyleLoaded()) updateIoTData();
     else map.current.once('load', updateIoTData);
-  }, [sensors, showSensors])
+  }, [sensors, showSensors, filterType, filterStatus])
 
   return (
     <div className="w-full h-full min-h-[500px] rounded-xl overflow-hidden border border-surface-200 dark:border-surface-700 shadow-sm relative group transition-colors duration-200">
       <div ref={mapContainer} className="absolute inset-0 w-full h-full bg-surface-100 dark:bg-surface-800 transition-colors duration-200" />
       
       {/* IoT Toggle Control */}
-      <div className="absolute top-4 left-4 z-10 bg-white/90 dark:bg-surface-800/90 backdrop-blur-sm p-2 rounded-lg shadow-sm border border-surface-200 dark:border-surface-700 flex items-center gap-3">
-        <div className="flex items-center gap-2">
-           <Activity className="w-4 h-4 text-primary-500" />
-           <span className="text-sm font-medium text-surface-900 dark:text-surface-100">Sensör Ağı</span>
+      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+        <div className="bg-white/90 dark:bg-surface-800/90 backdrop-blur-sm p-2 rounded-lg shadow-sm border border-surface-200 dark:border-surface-700 flex items-center justify-between gap-3 min-w-[200px]">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-primary-500" />
+            <span className="text-sm font-medium text-surface-900 dark:text-surface-100">Sensör Ağı</span>
+          </div>
+          <button
+            onClick={() => setShowSensors(prev => !prev)}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${showSensors ? 'bg-primary-500' : 'bg-surface-300 dark:bg-surface-600'}`}
+          >
+            <span className="sr-only">Toggle IoT Sensors</span>
+            <span
+              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition duration-200 ease-in-out ${showSensors ? 'translate-x-4.5' : 'translate-x-1'}`}
+            />
+          </button>
         </div>
-        <button
-          onClick={() => setShowSensors(prev => !prev)}
-          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${showSensors ? 'bg-primary-500' : 'bg-surface-300 dark:bg-surface-600'}`}
-        >
-          <span className="sr-only">Toggle IoT Sensors</span>
-          <span
-            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition duration-200 ease-in-out ${showSensors ? 'translate-x-4.5' : 'translate-x-1'}`}
-          />
-        </button>
+
+        {showSensors && (
+          <div className="bg-white/90 dark:bg-surface-800/90 backdrop-blur-sm p-2 rounded-lg shadow-sm border border-surface-200 dark:border-surface-700 flex flex-col gap-2 min-w-[200px] animate-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {(['all', 'aqi', 'waste', 'noise', 'water'] as const).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setFilterType(t)}
+                  className={`px-2 py-1 text-[10px] font-medium rounded-md transition-colors ${filterType === t ? 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-400' : 'text-surface-600 hover:bg-surface-100 dark:text-surface-400 dark:hover:bg-surface-700'}`}
+                >
+                  {t === 'all' ? 'Tümü' : t === 'aqi' ? 'Hava' : t === 'waste' ? 'Çöp' : t === 'noise' ? 'Ses' : 'Su'}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap pt-1.5 border-t border-surface-200 dark:border-surface-700">
+              {(['all', 'normal', 'warning', 'critical'] as const).map(s => (
+                <button
+                  key={s}
+                  onClick={() => setFilterStatus(s)}
+                  className={`px-2 py-1 text-[9px] uppercase font-bold rounded-md transition-colors ${filterStatus === s ? 'bg-surface-200 text-surface-900 dark:bg-surface-600 dark:text-surface-100' : 'text-surface-500 hover:bg-surface-100 dark:text-surface-400 dark:hover:bg-surface-700'}`}
+                >
+                  {s === 'all' ? 'Tümü' : s === 'normal' ? 'Normal' : s === 'warning' ? 'Uyarı' : 'Kritik'}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {!map.current && (

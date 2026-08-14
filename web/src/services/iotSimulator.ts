@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useToast } from '../context/ToastContext';
 import { initialMockSensors } from '../types/iot';
 import type { IoTSensor, SensorStatus } from '../types/iot';
 
@@ -67,11 +68,19 @@ class IoTSimulator {
         status = 'warning';
       }
 
+      const newTimestamp = new Date().toISOString();
+      
+      const newHistory = [...sensor.history, { timestamp: newTimestamp, value: newValue }];
+      if (newHistory.length > 30) {
+        newHistory.shift();
+      }
+
       return {
         ...sensor,
         value: newValue,
         status,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: newTimestamp,
+        history: newHistory
       };
     });
 
@@ -89,13 +98,35 @@ export const iotSimulator = new IoTSimulator();
 
 export function useIoTSimulator() {
   const [sensors, setSensors] = useState<IoTSensor[]>(iotSimulator.getSensors());
+  const { addToast } = useToast();
+  const prevStatuses = useRef<Record<string, SensorStatus>>({});
 
   useEffect(() => {
+    // Initialize refs
+    iotSimulator.getSensors().forEach(s => {
+      prevStatuses.current[s.id] = s.status;
+    });
+
     const unsubscribe = iotSimulator.subscribe((newSensors) => {
+      newSensors.forEach(sensor => {
+        const prevStatus = prevStatuses.current[sensor.id];
+        if (sensor.status === 'critical' && prevStatus !== 'critical') {
+          // Trigger alert
+          let msg = '';
+          if (sensor.type === 'aqi') msg = `Kötü Hava Kalitesi: ${sensor.value} ${sensor.unit}`;
+          if (sensor.type === 'waste') msg = `%${sensor.value} Doluluk Oranına Ulaştı!`;
+          if (sensor.type === 'noise') msg = `Yüksek Ses Seviyesi: ${sensor.value} ${sensor.unit}`;
+          if (sensor.type === 'water') msg = `Su Baskını Riski! Seviye: ${sensor.value} ${sensor.unit}`;
+
+          addToast('error', `KRİTİK UYARI: ${sensor.name} ${msg}`);
+        }
+        prevStatuses.current[sensor.id] = sensor.status;
+      });
+
       setSensors(newSensors);
     });
     return unsubscribe;
-  }, []);
+  }, [addToast]);
 
   return sensors;
 }
