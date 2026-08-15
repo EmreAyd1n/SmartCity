@@ -10,9 +10,15 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  Bot,
+  Clock,
+  CheckCircle2,
 } from 'lucide-react'
 import type { ReportWithRelations } from '../../types'
-import { getReportHistory, type ReportHistoryWithProfile } from '../../services/reports'
+import { getReportHistory, updateReportStatus, type ReportHistoryWithProfile } from '../../services/reports'
+import { getAISolutionAndRouting, type AIRoutingResult } from '../../services/aiService'
+import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
 
 interface ReportDetailModalProps {
   report: ReportWithRelations | null
@@ -46,9 +52,42 @@ const statusDotColor: Record<string, string> = {
 }
 
 export default function ReportDetailModal({ report, onClose }: ReportDetailModalProps) {
+  const { profile } = useAuth()
+  const { addToast } = useToast()
+  
   const [history, setHistory] = useState<ReportHistoryWithProfile[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
+  
+  const [aiAnalysis, setAiAnalysis] = useState<AIRoutingResult | null>(null)
+  const [selectedDepartment, setSelectedDepartment] = useState('')
+  const [isAssigning, setIsAssigning] = useState(false)
+
+  // AI Analizini hesapla
+  useEffect(() => {
+    if (report && (profile?.role === 'admin' || profile?.role === 'official')) {
+      const result = getAISolutionAndRouting(report.category?.name || 'Diğer', report.priority)
+      setAiAnalysis(result)
+      setSelectedDepartment(result.department)
+    } else {
+      setAiAnalysis(null)
+    }
+  }, [report, profile?.role])
+
+  const handleAssign = async () => {
+    if (!report || !profile) return
+    try {
+      setIsAssigning(true)
+      const notes = `AI Yönlendirmesi Onaylandı: ${selectedDepartment} birimine sevk edildi.`
+      await updateReportStatus(report.id, 'in_progress', profile.id, notes)
+      addToast('success', 'Birim ataması başarıyla yapıldı.')
+      onClose()
+    } catch (error: any) {
+      addToast('error', error.message || 'Atama yapılırken hata oluştu.')
+    } finally {
+      setIsAssigning(false)
+    }
+  }
 
   // ESC tuşu ile kapatma
   useEffect(() => {
@@ -147,6 +186,78 @@ export default function ReportDetailModal({ report, onClose }: ReportDetailModal
             
             {/* Sol Kolon - Açıklama */}
             <div className="md:col-span-2 space-y-6">
+              
+              {/* AI Analiz Paneli (Sadece Yetkililere) */}
+              {aiAnalysis && (
+                <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                      <Bot className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-base font-bold text-indigo-900 tracking-tight">
+                      AI Birim & Aksiyon Analizi
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-5">
+                    <div className="bg-white p-3 rounded-lg border border-indigo-50">
+                      <span className="block text-xs font-semibold text-indigo-400 uppercase mb-1">Tahmini Çözüm (SLA)</span>
+                      <div className="flex items-center gap-1.5 text-sm font-medium text-indigo-700">
+                        <Clock className="w-4 h-4" />
+                        {aiAnalysis.sla}
+                      </div>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg border border-indigo-50">
+                      <span className="block text-xs font-semibold text-indigo-400 uppercase mb-1">Öncelik Derecesi</span>
+                      <div className="flex items-center gap-1.5 text-sm font-medium text-indigo-700">
+                        <div className={`w-2.5 h-2.5 rounded-full ${report.priority === 'urgent' ? 'bg-red-500' : report.priority === 'high' ? 'bg-orange-500' : report.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'}`} />
+                        {report.priority === 'urgent' ? 'Acil' : report.priority === 'high' ? 'Yüksek' : report.priority === 'medium' ? 'Orta' : 'Düşük'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-5">
+                    <span className="block text-xs font-semibold text-indigo-400 uppercase mb-2">Önerilen Aksiyon Planı</span>
+                    <ul className="space-y-2">
+                      {aiAnalysis.actionPlan.map((step, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-sm text-indigo-800">
+                          <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {report.status === 'pending' && (
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t border-indigo-100">
+                      <select
+                        value={selectedDepartment}
+                        onChange={(e) => setSelectedDepartment(e.target.value)}
+                        className="flex-1 rounded-md border-indigo-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 shadow-sm py-2 px-3 bg-white text-indigo-900"
+                      >
+                        <option value="Fen İşleri Müdürlüğü">Fen İşleri Müdürlüğü</option>
+                        <option value="Park ve Bahçeler Müdürlüğü">Park ve Bahçeler Müdürlüğü</option>
+                        <option value="Temizlik İşleri Müdürlüğü">Temizlik İşleri Müdürlüğü</option>
+                        <option value="Su ve Kanalizasyon İdaresi">Su ve Kanalizasyon İdaresi</option>
+                        <option value="Ulaşım Hizmetleri Müdürlüğü">Ulaşım Hizmetleri Müdürlüğü</option>
+                        <option value="Elektrik ve Aydınlatma Birimi">Elektrik ve Aydınlatma Birimi</option>
+                        <option value="Zabıta Müdürlüğü">Zabıta Müdürlüğü</option>
+                        <option value="Destek Hizmetleri">Destek Hizmetleri</option>
+                      </select>
+                      
+                      <button
+                        onClick={handleAssign}
+                        disabled={isAssigning}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {isAssigning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
+                        Onayla ve Sevk Et
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div>
                 <h3 className="text-sm font-semibold text-surface-900 uppercase tracking-wider mb-3">
                   Detaylı Açıklama

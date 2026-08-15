@@ -371,3 +371,97 @@ function simulateProcessing(): Promise<void> {
   const delay = 1500 + Math.random() * 1500
   return new Promise((resolve) => setTimeout(resolve, delay))
 }
+
+// ────────────────────────────────────────────────────────────
+// AI Birim ve Çözüm (SLA) Yönlendirme
+// ────────────────────────────────────────────────────────────
+
+export interface AIRoutingResult {
+  department: string
+  sla: string
+  actionPlan: string[]
+}
+
+/**
+ * Kategori ve aciliyete göre ilgili belediye birimini, Tahmini Çözüm Süresi (SLA)'ni
+ * ve 2-3 maddelik aksiyon planını belirler.
+ */
+export function getAISolutionAndRouting(
+  categoryName: string,
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+): AIRoutingResult {
+  let department = 'Destek Hizmetleri'
+  let sla = '5 İş Günü'
+  let actionPlan: string[] = []
+
+  const lowerCategory = categoryName.toLowerCase()
+
+  // Birim Belirleme
+  if (lowerCategory.includes('altyapı') || lowerCategory.includes('yol')) {
+    department = 'Fen İşleri Müdürlüğü'
+    actionPlan = [
+      'Bölgeye teknik ekip sevk edilecek',
+      'Hasar tespiti ve güvenlik önlemleri alınacak',
+      'Onarım/yapım çalışmaları başlatılacak'
+    ]
+  } else if (lowerCategory.includes('park') || lowerCategory.includes('bahçe') || lowerCategory.includes('ağaç')) {
+    department = 'Park ve Bahçeler Müdürlüğü'
+    actionPlan = [
+      'İlgili alanda peyzaj ekibi inceleme yapacak',
+      'Gerekli budama veya onarım işlemi gerçekleştirilecek',
+      'Alan temizlenip kullanıma hazır hale getirilecek'
+    ]
+  } else if (lowerCategory.includes('çevre') || lowerCategory.includes('temizlik') || lowerCategory.includes('çöp')) {
+    department = 'Temizlik İşleri Müdürlüğü'
+    actionPlan = [
+      'Temizlik araçları bölgeye yönlendirilecek',
+      'Atıklar/kirlilik kaynağı temizlenecek',
+      'Bölge dezenfekte edilip hijyen sağlanacak'
+    ]
+  } else if (lowerCategory.includes('su') || lowerCategory.includes('kanalizasyon')) {
+    department = 'Su ve Kanalizasyon İdaresi'
+    actionPlan = [
+      'Altyapı arıza ekibi yönlendirilecek',
+      'Sızıntı/taşma veya arıza kaynağı tespit edilecek',
+      'Onarım yapılıp sistem test edilecek'
+    ]
+  } else if (lowerCategory.includes('ulaşım') || lowerCategory.includes('trafik')) {
+    department = 'Ulaşım Hizmetleri Müdürlüğü'
+    actionPlan = [
+      'Trafik kontrol veya bakım ekibi yönlendirilecek',
+      'Sorunlu levha, sinyalizasyon veya yol durumu düzeltilecek',
+      'Trafik akışı güvenli hale getirilecek'
+    ]
+  } else if (lowerCategory.includes('aydınlatma') || lowerCategory.includes('lamba')) {
+    department = 'Elektrik ve Aydınlatma Birimi'
+    actionPlan = [
+      'Bölgedeki elektrik/aydınlatma arızası tespit edilecek',
+      'Gerekli lamba veya kablo değişimi yapılacak',
+      'Sistem test edilerek aydınlatma sağlanacak'
+    ]
+  } else {
+    department = 'Zabıta Müdürlüğü'
+    actionPlan = [
+      'Bölgeye zabıta ekibi intikal edecek',
+      'Durum tespiti ve tutanak işlemi yapılacak',
+      'İlgili müdahale gerçekleştirilip süreç sonlandırılacak'
+    ]
+  }
+
+  // SLA Belirleme (Aciliyet bazlı dinamik)
+  if (priority === 'urgent') {
+    sla = '2-4 Saat'
+  } else if (priority === 'high') {
+    sla = '24 Saat'
+  } else if (priority === 'medium') {
+    sla = '3 İş Günü'
+  } else {
+    sla = '5-7 İş Günü'
+  }
+
+  return {
+    department,
+    sla,
+    actionPlan
+  }
+}

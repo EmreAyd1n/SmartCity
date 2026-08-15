@@ -81,7 +81,8 @@ export async function getCategories(): Promise<Category[]> {
 export async function updateReportStatus(
   reportId: string,
   newStatus: ReportStatus,
-  changedById: string
+  changedById: string,
+  customNotes?: string
 ): Promise<void> {
   // 1. Raporun durumunu güncelle
   const { error: updateError } = await supabase
@@ -101,7 +102,7 @@ export async function updateReportStatus(
       report_id: reportId,
       status: newStatus,
       changed_by: changedById,
-      notes: 'Durum güncellendi',
+      notes: customNotes || 'Durum güncellendi',
     })
 
   if (historyError) {
