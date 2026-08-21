@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import OfflineBadge from '../pwa/OfflineBadge';
+import AIChatbotWidget from '../chat/AIChatbotWidget';
 
 const MainLayout: React.FC = () => {
   return (
@@ -13,6 +14,7 @@ const MainLayout: React.FC = () => {
         <Outlet />
       </main>
       <Footer />
+      <AIChatbotWidget />
     </div>
   );
 };
