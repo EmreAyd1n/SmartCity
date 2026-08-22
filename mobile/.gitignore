@@ -1,0 +1,20 @@
+# Bağımlılıklar
+node_modules/
+
+# Expo ve Derleme Önbellekleri
+.expo/
+dist/
+web-build/
+
+# Çevre Değişkenleri ve Gizli Dosyalar
+.env
+.env*.local
+
+# Hata ve Log Dosyaları
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# İşletim Sistemi Atık Dosyaları
+.DS_Store
+Thumbs.db
