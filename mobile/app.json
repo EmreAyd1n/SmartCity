@@ -6,6 +6,21 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Sorun bildirimi için fotoğraf seçmek amacıyla galerinize erişim izni gereklidir.",
+          "cameraPermission": "Sorun bildirimi için fotoğraf çekmek amacıyla kamera erişim izni gereklidir."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Sorun konumunu belirlemek için konum erişim izni gereklidir."
+        }
+      ]
+    ],
     "ios": {
       "supportsTablet": true
     },
@@ -23,3 +38,4 @@
     }
   }
 }
+
