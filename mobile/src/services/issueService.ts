@@ -157,3 +157,25 @@ export const getIssueStats = async (): Promise<IssueStats> => {
     return mockStats;
   }
 };
+
+export const getActiveIssuesWithCoordinates = async (): Promise<Issue[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('reports')
+      .select('*')
+      .not('latitude', 'is', null)
+      .not('longitude', 'is', null)
+      .not('status', 'eq', 'resolved')
+      .not('status', 'eq', 'çözüldü');
+
+    if (error) {
+      console.warn('Error fetching map issues:', error);
+      return [];
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error('Unexpected error fetching map issues:', err);
+    return [];
+  }
+};
