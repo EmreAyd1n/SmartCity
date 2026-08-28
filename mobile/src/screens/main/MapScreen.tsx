@@ -4,9 +4,6 @@ import MapView, { Marker, Callout, Region } from 'react-native-maps';
 import { Issue, getActiveIssuesWithCoordinates } from '../../services/issueService';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
-// Elazığ coordinates
 const INITIAL_REGION: Region = {
   latitude: 38.6748,
   longitude: 39.2225,
@@ -14,15 +11,22 @@ const INITIAL_REGION: Region = {
   longitudeDelta: 0.0421,
 };
 
-type RootStackParamList = {
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { CompositeNavigationProp } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { RootStackParamList } from '../../navigation/RootNavigator';
+
+type RootTabParamList = {
   Home: undefined;
-  ReportIssue: undefined;
+  Report: undefined;
   Map: undefined;
   Profile: undefined;
-  IssueDetail: { issueId: string };
 };
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Map'>;
+type NavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<RootTabParamList, 'Map'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 export default function MapScreen() {
   const [issues, setIssues] = useState<Issue[]>([]);
@@ -98,7 +102,7 @@ export default function MapScreen() {
             }}
             pinColor={getMarkerColor(issue.status)}
           >
-            <Callout tooltip onPress={() => navigation.navigate('IssueDetail', { issueId: issue.id })}>
+            <Callout tooltip onPress={() => navigation.navigate('IssueDetail', { issue })}>
               <View style={styles.calloutContainer}>
                 {issue.image_url && (
                   <Image source={{ uri: issue.image_url }} style={styles.calloutImage} />

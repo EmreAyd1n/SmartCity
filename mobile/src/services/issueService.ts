@@ -179,3 +179,26 @@ export const getActiveIssuesWithCoordinates = async (): Promise<Issue[]> => {
     return [];
   }
 };
+
+export const updateIssueStatus = async (
+  issueId: string,
+  status: 'pending' | 'in_progress' | 'resolved'
+): Promise<Issue | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('reports')
+      .update({ status })
+      .eq('id', issueId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Sorun durumu güncellenirken hata: ${error.message}`);
+    }
+
+    return data;
+  } catch (err) {
+    console.error('Unexpected error updating issue status:', err);
+    return null;
+  }
+};

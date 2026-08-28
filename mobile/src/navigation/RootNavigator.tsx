@@ -1,9 +1,19 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ActivityIndicator, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import AuthNavigator from './AuthNavigator';
 import MainTabNavigator from './MainTabNavigator';
+import IssueDetailScreen from '../screens/main/IssueDetailScreen';
+import { Issue } from '../services/issueService';
+
+export type RootStackParamList = {
+  MainTabs: undefined;
+  IssueDetail: { issue: Issue };
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
   const { session, loading } = useAuth();
@@ -18,7 +28,18 @@ export default function RootNavigator() {
 
   return (
     <NavigationContainer>
-      {session ? <MainTabNavigator /> : <AuthNavigator />}
+      {session ? (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+          <Stack.Screen
+            name="IssueDetail"
+            component={IssueDetailScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+        </Stack.Navigator>
+      ) : (
+        <AuthNavigator />
+      )}
     </NavigationContainer>
   );
 }

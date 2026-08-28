@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  role: 'citizen' | 'field_team' | 'admin';
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
+  role: 'citizen',
   signIn: async () => ({ error: null }),
   signUp: async () => ({ error: null }),
   signOut: async () => {},
@@ -26,12 +28,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<'citizen' | 'field_team' | 'admin'>('citizen');
 
   useEffect(() => {
     // Check active session on initial load
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setRole((session?.user?.user_metadata?.role as 'citizen' | 'field_team' | 'admin') || 'citizen');
       setLoading(false);
     });
 
@@ -40,6 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        setRole((session?.user?.user_metadata?.role as 'citizen' | 'field_team' | 'admin') || 'citizen');
         setLoading(false);
       }
     );
@@ -67,6 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       options: {
         data: {
           display_name: displayName,
+          role: 'citizen', // Default role for new signups
         },
       },
     });
@@ -77,11 +83,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     setLoading(true);
     await supabase.auth.signOut();
+    setRole('citizen');
     setLoading(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, role, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

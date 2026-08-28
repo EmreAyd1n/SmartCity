@@ -1,10 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { getRecentIssues, getIssueStats, Issue, IssueStats } from '../../services/issueService';
+import { RootStackParamList } from '../../navigation/RootNavigator';
 
 type RootTabParamList = {
   Home: undefined;
@@ -13,7 +15,10 @@ type RootTabParamList = {
   Profile: undefined;
 };
 
-type NavigationProp = BottomTabNavigationProp<RootTabParamList, 'Home'>;
+type NavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<RootTabParamList, 'Home'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
@@ -168,7 +173,12 @@ export default function HomeScreen() {
           recentIssues.map((issue) => {
             const badge = getStatusBadge(issue.status);
             return (
-              <View key={issue.id} className="bg-white p-4 rounded-2xl shadow-sm mb-3 flex-row justify-between items-center">
+              <TouchableOpacity
+                key={issue.id}
+                className="bg-white p-4 rounded-2xl shadow-sm mb-3 flex-row justify-between items-center"
+                onPress={() => navigation.navigate('IssueDetail', { issue })}
+                activeOpacity={0.7}
+              >
                 <View className="flex-1 mr-3">
                   <Text className="text-gray-800 font-semibold mb-1" numberOfLines={1}>{issue.title}</Text>
                   <Text className="text-gray-400 text-xs">{formatDate(issue.created_at)}</Text>
@@ -176,7 +186,7 @@ export default function HomeScreen() {
                 <View className={`px-3 py-1 rounded-full ${badge.bg}`}>
                   <Text className={`text-xs font-medium ${badge.textCol}`}>{badge.text}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           })
         )}
