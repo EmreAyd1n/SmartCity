@@ -1,4 +1,6 @@
 import { supabase } from './supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 
 export interface Issue {
   id: string;
@@ -42,6 +44,9 @@ const mockStats: IssueStats = {
   activeTeams: 12
 };
 
+const CACHE_KEY_RECENT_ISSUES = 'recent_issues_cache';
+const CACHE_KEY_MAP_ISSUES = 'map_issues_cache';
+
 /**
  * Uploads an issue image to the Supabase Storage 'issues' bucket.
  * Returns the public URL of the uploaded image.
@@ -50,11 +55,8 @@ export const uploadIssueImage = async (imageUri: string): Promise<string> => {
   const fileName = `issue_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.jpg`;
   const filePath = `public/${fileName}`;
 
-  // Fetch the image as a blob
   const response = await fetch(imageUri);
   const blob = await response.blob();
-
-  // Convert blob to ArrayBuffer for Supabase upload
   const arrayBuffer = await new Response(blob).arrayBuffer();
 
   const { error: uploadError } = await supabase.storage
@@ -75,9 +77,6 @@ export const uploadIssueImage = async (imageUri: string): Promise<string> => {
   return publicUrlData.publicUrl;
 };
 
-/**
- * Creates a new issue record in the 'issues' table with status 'pending'.
- */
 export const createIssue = async (input: CreateIssueInput): Promise<Issue> => {
   const { data, error } = await supabase
     .from('reports')
@@ -102,6 +101,13 @@ export const createIssue = async (input: CreateIssueInput): Promise<Issue> => {
 
 export const getRecentIssues = async (limit: number = 4): Promise<Issue[]> => {
   try {
+    const netInfo = await NetInfo.fetch();
+    if (!netInfo.isConnected) {
+      const cached = await AsyncStorage.getItem(CACHE_KEY_RECENT_ISSUES);
+      if (cached) return JSON.parse(cached).slice(0, limit);
+      return mockIssues.slice(0, limit);
+    }
+
     const { data, error } = await supabase
       .from('reports')
       .select('*')
@@ -109,19 +115,28 @@ export const getRecentIssues = async (limit: number = 4): Promise<Issue[]> => {
       .limit(limit);
 
     if (error) {
-      console.warn('Error fetching issues, using mock data:', error);
+      console.warn('Error fetching issues, using cache/mock data:', error);
+      const cached = await AsyncStorage.getItem(CACHE_KEY_RECENT_ISSUES);
+      if (cached) return JSON.parse(cached).slice(0, limit);
       return mockIssues.slice(0, limit);
     }
 
-    return data && data.length > 0 ? data : mockIssues.slice(0, limit);
+    const issues = data && data.length > 0 ? data : mockIssues.slice(0, limit);
+    await AsyncStorage.setItem(CACHE_KEY_RECENT_ISSUES, JSON.stringify(issues));
+    return issues;
   } catch (err) {
     console.error('Unexpected error fetching issues:', err);
+    const cached = await AsyncStorage.getItem(CACHE_KEY_RECENT_ISSUES);
+    if (cached) return JSON.parse(cached).slice(0, limit);
     return mockIssues.slice(0, limit);
   }
 };
 
 export const getIssueStats = async (): Promise<IssueStats> => {
   try {
+    const netInfo = await NetInfo.fetch();
+    if (!netInfo.isConnected) return mockStats;
+
     const { count: total, error: totalError } = await supabase
       .from('reports')
       .select('*', { count: 'exact', head: true });
@@ -132,7 +147,7 @@ export const getIssueStats = async (): Promise<IssueStats> => {
     }
     
     if (total === 0 || total === null) {
-      return mockStats; // Fallback to mock stats if empty
+      return mockStats;
     }
 
     const { count: resolvedCount } = await supabase
@@ -160,6 +175,13 @@ export const getIssueStats = async (): Promise<IssueStats> => {
 
 export const getActiveIssuesWithCoordinates = async (): Promise<Issue[]> => {
   try {
+    const netInfo = await NetInfo.fetch();
+    if (!netInfo.isConnected) {
+      const cached = await AsyncStorage.getItem(CACHE_KEY_MAP_ISSUES);
+      if (cached) return JSON.parse(cached);
+      return [];
+    }
+
     const { data, error } = await supabase
       .from('reports')
       .select('*')
@@ -170,12 +192,18 @@ export const getActiveIssuesWithCoordinates = async (): Promise<Issue[]> => {
 
     if (error) {
       console.warn('Error fetching map issues:', error);
+      const cached = await AsyncStorage.getItem(CACHE_KEY_MAP_ISSUES);
+      if (cached) return JSON.parse(cached);
       return [];
     }
 
-    return data || [];
+    const issues = data || [];
+    await AsyncStorage.setItem(CACHE_KEY_MAP_ISSUES, JSON.stringify(issues));
+    return issues;
   } catch (err) {
     console.error('Unexpected error fetching map issues:', err);
+    const cached = await AsyncStorage.getItem(CACHE_KEY_MAP_ISSUES);
+    if (cached) return JSON.parse(cached);
     return [];
   }
 };

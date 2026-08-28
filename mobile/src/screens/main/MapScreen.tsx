@@ -4,6 +4,7 @@ import MapView, { Marker, Callout, Region } from 'react-native-maps';
 import { Issue, getActiveIssuesWithCoordinates } from '../../services/issueService';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import OfflineBanner from '../../components/OfflineBanner';
 const INITIAL_REGION: Region = {
   latitude: 38.6748,
   longitude: 39.2225,
@@ -86,6 +87,7 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
+      <OfflineBanner />
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -102,7 +104,7 @@ export default function MapScreen() {
             }}
             pinColor={getMarkerColor(issue.status)}
           >
-            <Callout tooltip onPress={() => navigation.navigate('IssueDetail', { issue })}>
+            <Callout tooltip onPress={() => navigation.navigate('IssueDetail', { issue })}> 
               <View style={styles.calloutContainer}>
                 {issue.image_url && (
                   <Image source={{ uri: issue.image_url }} style={styles.calloutImage} />
@@ -110,7 +112,7 @@ export default function MapScreen() {
                 <View style={styles.calloutTextContainer}>
                   <Text style={styles.calloutTitle} numberOfLines={1}>{issue.title}</Text>
                   <Text style={styles.calloutCategory}>{issue.category}</Text>
-                  <View style={[styles.statusBadge, { backgroundColor: getMarkerColor(issue.status) }]}>
+                  <View style={[styles.statusBadge, { backgroundColor: getMarkerColor(issue.status) }]}> 
                     <Text style={styles.statusText}>{getStatusText(issue.status)}</Text>
                   </View>
                 </View>
@@ -186,7 +188,6 @@ const styles = StyleSheet.create({
     padding: 8,
     width: 200,
     flexDirection: 'column',
-    // Android için tooltip gölgesi/sınırı oluşturma
     borderColor: '#e5e7eb',
     borderWidth: 1,
   },
