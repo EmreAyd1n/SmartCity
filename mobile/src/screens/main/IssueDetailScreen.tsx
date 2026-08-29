@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { updateIssueStatus, Issue } from '../../services/issueService';
+import { sendLocalNotification } from '../../services/notificationService';
 
 type IssueDetailRouteParams = {
   IssueDetail: {
@@ -96,6 +97,14 @@ export default function IssueDetailScreen() {
               const updated = await updateIssueStatus(issue.id, newStatus);
               if (updated) {
                 setIssue(updated);
+                
+                const title = newStatus === 'in_progress' ? 'Bildirim İşleme Alındı' : 'Bildirim Çözüldü';
+                const body = newStatus === 'in_progress' 
+                  ? `"${issue.title}" başlıklı bildiriminiz işleme alınmıştır.` 
+                  : `"${issue.title}" başlıklı bildiriminiz çözülmüştür.`;
+                  
+                await sendLocalNotification(title, body);
+                
                 Alert.alert('Başarılı', 'Durum başarıyla güncellendi.');
               } else {
                 Alert.alert('Hata', 'Durum güncellenirken bir sorun oluştu.');
