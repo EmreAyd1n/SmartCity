@@ -1,7 +1,9 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Alert, Image, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+import * as ImagePicker from 'expo-image-picker';
+import { profileService } from '../../services/profileService';
 
 const getRoleBadge = (role: 'citizen' | 'field_team' | 'admin') => {
   switch (role) {
@@ -33,19 +35,107 @@ const getRoleBadge = (role: 'citizen' | 'field_team' | 'admin') => {
 };
 
 export default function ProfileScreen() {
-  const { user, role, signOut } = useAuth();
+  const { user, profile, role, signOut, refreshProfile } = useAuth();
   const roleBadge = getRoleBadge(role);
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [firstName, setFirstName] = useState(profile?.first_name || '');
+  const [lastName, setLastName] = useState(profile?.last_name || '');
+  const [phone, setPhone] = useState(profile?.phone || '');
+  const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
   const userName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Kullanıcı';
   const userEmail = user?.email || '';
+  const displayName = profile?.first_name || profile?.last_name ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : userName;
+
+  const handlePickAvatar = async () => {
+    if (!user) return;
+    
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setUploadingAvatar(true);
+        const imageUri = result.assets[0].uri;
+        
+        // Upload to supabase
+        const avatarUrl = await profileService.uploadAvatarImage(imageUri, user.id);
+        
+        // Update profile
+        await profileService.updateUserProfile(user.id, { avatar_url: avatarUrl });
+        
+        // Refresh context
+        await refreshProfile();
+        
+        Alert.alert('Başarılı', 'Profil fotoğrafınız güncellendi.');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Hata', 'Profil fotoğrafı güncellenirken bir sorun oluştu.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    
+    setSaving(true);
+    try {
+      await profileService.updateUserProfile(user.id, {
+        first_name: firstName,
+        last_name: lastName,
+        phone: phone,
+      });
+      await refreshProfile();
+      setIsEditing(false);
+      Alert.alert('Başarılı', 'Profil bilgileriniz güncellendi.');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Hata', 'Profil güncellenirken bir sorun oluştu.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <ScrollView className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="bg-blue-600 pt-16 pb-8 px-4 items-center rounded-b-3xl">
-        <View className="bg-white/20 w-20 h-20 rounded-full items-center justify-center mb-3">
-          <Ionicons name="person" size={40} color="white" />
-        </View>
-        <Text className="text-white text-xl font-bold">{userName}</Text>
+        {/* 
+          Fallback: Eğer 'avatars' adında kamuya açık (public) bir bucket 
+          Supabase üzerinde tanımlanmamışsa veya profil fotoğrafı yoksa 
+          varsayılan ikon gösterilir.
+        */}
+        <TouchableOpacity 
+          className="bg-white/20 w-24 h-24 rounded-full items-center justify-center mb-3 relative overflow-hidden"
+          onPress={handlePickAvatar}
+          disabled={uploadingAvatar}
+        >
+          {profile?.avatar_url ? (
+            <Image source={{ uri: profile.avatar_url }} className="w-full h-full rounded-full" />
+          ) : (
+            <Ionicons name="person" size={50} color="white" />
+          )}
+          
+          <View className="absolute bottom-0 w-full bg-black/40 items-center py-1">
+            <Text className="text-white text-[10px]">Değiştir</Text>
+          </View>
+          
+          {uploadingAvatar && (
+            <View className="absolute inset-0 bg-black/50 items-center justify-center">
+              <ActivityIndicator color="white" />
+            </View>
+          )}
+        </TouchableOpacity>
+        
+        <Text className="text-white text-xl font-bold">{displayName}</Text>
         <Text className="text-blue-200 text-sm mt-1">{userEmail}</Text>
 
         {/* Role Badge */}
@@ -54,6 +144,80 @@ export default function ProfileScreen() {
           <Text className={`ml-2 font-semibold text-sm ${roleBadge.textCol}`}>
             {roleBadge.label}
           </Text>
+        </View>
+      </View>
+
+      {/* Profile Details */}
+      <View className="px-4 mt-6">
+        <View className="bg-white rounded-2xl shadow-sm overflow-hidden p-4">
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-lg font-semibold text-gray-800">Kişisel Bilgiler</Text>
+            <TouchableOpacity onPress={() => setIsEditing(!isEditing)}>
+              <Text className="text-blue-600 font-medium">{isEditing ? 'İptal' : 'Düzenle'}</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View className="space-y-4">
+            <View>
+              <Text className="text-sm text-gray-500 mb-1">Ad</Text>
+              {isEditing ? (
+                <TextInput
+                  className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-800"
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  placeholder="Adınız"
+                />
+              ) : (
+                <Text className="text-gray-800">{profile?.first_name || '-'}</Text>
+              )}
+            </View>
+            
+            <View>
+              <Text className="text-sm text-gray-500 mb-1">Soyad</Text>
+              {isEditing ? (
+                <TextInput
+                  className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-800"
+                  value={lastName}
+                  onChangeText={setLastName}
+                  placeholder="Soyadınız"
+                />
+              ) : (
+                <Text className="text-gray-800">{profile?.last_name || '-'}</Text>
+              )}
+            </View>
+            
+            <View>
+              <Text className="text-sm text-gray-500 mb-1">Telefon</Text>
+              {isEditing ? (
+                <TextInput
+                  className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-800"
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="05XX XXX XX XX"
+                  keyboardType="phone-pad"
+                />
+              ) : (
+                <Text className="text-gray-800">{profile?.phone || '-'}</Text>
+              )}
+            </View>
+          </View>
+
+          {isEditing && (
+            <TouchableOpacity 
+              className="bg-blue-600 py-3 rounded-xl mt-6 items-center flex-row justify-center"
+              onPress={handleSave}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <>
+                  <Ionicons name="save-outline" size={20} color="white" />
+                  <Text className="text-white font-bold ml-2">Kaydet</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -87,7 +251,7 @@ export default function ProfileScreen() {
       </View>
 
       {/* Sign Out */}
-      <View className="px-4 mt-6">
+      <View className="px-4 mt-6 mb-8">
         <TouchableOpacity
           className="bg-red-500 py-4 rounded-2xl items-center flex-row justify-center"
           onPress={signOut}
@@ -96,6 +260,6 @@ export default function ProfileScreen() {
           <Text className="text-white font-bold ml-2">Çıkış Yap</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
