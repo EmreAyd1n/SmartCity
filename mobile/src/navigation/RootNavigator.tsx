@@ -6,11 +6,13 @@ import { useAuth } from '../context/AuthContext';
 import AuthNavigator from './AuthNavigator';
 import MainTabNavigator from './MainTabNavigator';
 import IssueDetailScreen from '../screens/main/IssueDetailScreen';
+import NotificationsScreen from '../screens/main/NotificationsScreen';
 import { Issue } from '../services/issueService';
 
 export type RootStackParamList = {
   MainTabs: undefined;
   IssueDetail: { issue: Issue };
+  Notifications: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -34,6 +36,11 @@ export default function RootNavigator() {
           <Stack.Screen
             name="IssueDetail"
             component={IssueDetailScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="Notifications"
+            component={NotificationsScreen}
             options={{ animation: 'slide_from_right' }}
           />
         </Stack.Navigator>

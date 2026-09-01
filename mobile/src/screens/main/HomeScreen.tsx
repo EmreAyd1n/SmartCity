@@ -6,6 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { getRecentIssues, getIssueStats, Issue, IssueStats } from '../../services/issueService';
+import { getUnreadNotificationCount } from '../../services/notificationService';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import OfflineBanner from '../../components/OfflineBanner';
 
@@ -87,14 +88,17 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<IssueStats | null>(null);
   const [recentIssues, setRecentIssues] = useState<Issue[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchData = async () => {
-    const [fetchedStats, fetchedIssues] = await Promise.all([
+    const [fetchedStats, fetchedIssues, fetchedUnreadCount] = await Promise.all([
       getIssueStats(),
       getRecentIssues(4),
+      getUnreadNotificationCount(),
     ]);
     setStats(fetchedStats);
     setRecentIssues(fetchedIssues);
+    setUnreadCount(fetchedUnreadCount);
   };
 
   const loadInitialData = async () => {
@@ -137,9 +141,24 @@ export default function HomeScreen() {
               <Text className="text-blue-100 text-sm">Merhaba,</Text>
               <Text className="text-white text-2xl font-bold">{userName}</Text>
             </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Profile')} className="bg-blue-500 p-2 rounded-full">
-              <Ionicons name="person" size={24} color="white" />
-            </TouchableOpacity>
+            <View className="flex-row items-center">
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Notifications')}
+                className="bg-blue-500 p-2 rounded-full mr-2 relative"
+              >
+                <Ionicons name="notifications" size={24} color="white" />
+                {unreadCount > 0 && (
+                  <View className="absolute -top-1 -right-1 bg-red-500 rounded-full min-w-[20px] h-5 items-center justify-center px-1">
+                    <Text className="text-white text-xs font-bold">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate('Profile')} className="bg-blue-500 p-2 rounded-full">
+                <Ionicons name="person" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
           </View>
           <View className="bg-white/20 mt-4 p-3 rounded-xl flex-row items-center">
             <Ionicons name="partly-sunny" size={24} color="white" />
