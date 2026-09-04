@@ -93,6 +93,9 @@ export const createIssue = async (input: CreateIssueInput): Promise<Issue> => {
     .single();
 
   if (error) {
+    if (error.code === 'PGRST301' || error.code === '42501') {
+      throw new Error('Yetkisiz işlem: Bildirim oluşturma yetkiniz bulunmamaktadır.');
+    }
     throw new Error(`Sorun kaydı oluşturulurken hata: ${error.message}`);
   }
 
@@ -221,11 +224,17 @@ export const updateIssueStatus = async (
       .single();
 
     if (error) {
+      if (error.code === 'PGRST301' || error.code === '42501') {
+        throw new Error('Yetkisiz işlem: Bu kaydı güncelleme yetkiniz bulunmamaktadır.');
+      }
       throw new Error(`Sorun durumu güncellenirken hata: ${error.message}`);
     }
 
     return data;
-  } catch (err) {
+  } catch (err: any) {
+    if (err.message && err.message.includes('Yetkisiz işlem')) {
+      throw err; // Kullanıcıya gösterilmesi için fırlatıyoruz
+    }
     console.error('Unexpected error updating issue status:', err);
     return null;
   }

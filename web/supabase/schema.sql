@@ -185,21 +185,22 @@ CREATE POLICY "categories_update_admin"
 -- REPORTS politikaları
 -- ────────────────────────────────────────────────────────────
 
--- Herkes bildirimleri görebilir (şeffaflık)
+-- Oturum açmış tüm kullanıcılar bildirimleri okuyabilir
 CREATE POLICY "reports_select_all"
   ON reports FOR SELECT
-  USING (true);
+  USING (auth.uid() IS NOT NULL);
 
 -- Giriş yapmış kullanıcı bildirim oluşturabilir
 CREATE POLICY "reports_insert_authenticated"
   ON reports FOR INSERT
   WITH CHECK (auth.uid() = citizen_id);
 
--- Vatandaş kendi bildirimini, admin/staff ise tüm bildirimleri güncelleyebilir
+-- Vatandaşlar yalnızca kendilerine ait henüz işleme alınmamış bildirimleri güncelleyebilir.
+-- Saha ekibi ve Yetkili (Admin) rolündeki kullanıcılar ise tüm bildirimleri güncelleyebilir (durum vs.).
 CREATE POLICY "reports_update_owner_or_staff"
   ON reports FOR UPDATE
   USING (
-    auth.uid() = citizen_id
+    (auth.uid() = citizen_id AND status = 'pending')
     OR EXISTS (
       SELECT 1 FROM profiles
       WHERE profiles.id = auth.uid()

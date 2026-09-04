@@ -75,11 +75,17 @@ export const profileService = {
         .single();
 
       if (error) {
+        if (error.code === 'PGRST301' || error.code === '42501') {
+          throw new Error('Yetkisiz işlem: Sadece kendi profilinizi güncelleyebilirsiniz.');
+        }
         throw error;
       }
 
       return data as Profile;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message && error.message.includes('Yetkisiz işlem')) {
+        throw error;
+      }
       console.error('Error updating profile:', error);
       throw error;
     }
