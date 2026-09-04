@@ -5,6 +5,8 @@ import { Issue, getActiveIssuesWithCoordinates } from '../../services/issueServi
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import OfflineBanner from '../../components/OfflineBanner';
+import { useTheme } from '../../context/ThemeContext';
+
 const INITIAL_REGION: Region = {
   latitude: 38.6748,
   longitude: 39.2225,
@@ -34,6 +36,7 @@ export default function MapScreen() {
   const [loading, setLoading] = useState(true);
   const mapRef = useRef<MapView>(null);
   const navigation = useNavigation<NavigationProp>();
+  const { isDark, colors } = useTheme();
 
   const fetchIssues = async () => {
     setLoading(true);
@@ -86,7 +89,7 @@ export default function MapScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1">
       <OfflineBanner />
       <MapView
         ref={mapRef}
@@ -94,6 +97,7 @@ export default function MapScreen() {
         initialRegion={INITIAL_REGION}
         showsUserLocation={true}
         showsMyLocationButton={false}
+        userInterfaceStyle={isDark ? "dark" : "light"}
       >
         {issues.map((issue) => (
           <Marker
@@ -105,13 +109,13 @@ export default function MapScreen() {
             pinColor={getMarkerColor(issue.status)}
           >
             <Callout tooltip onPress={() => navigation.navigate('IssueDetail', { issue })}> 
-              <View style={styles.calloutContainer}>
+              <View className="bg-white dark:bg-gray-800 rounded-xl p-2 w-[200px] flex-col border border-gray-200 dark:border-gray-700">
                 {issue.image_url && (
                   <Image source={{ uri: issue.image_url }} style={styles.calloutImage} />
                 )}
-                <View style={styles.calloutTextContainer}>
-                  <Text style={styles.calloutTitle} numberOfLines={1}>{issue.title}</Text>
-                  <Text style={styles.calloutCategory}>{issue.category}</Text>
+                <View className="flex-1">
+                  <Text className="font-bold text-sm mb-1 text-gray-800 dark:text-gray-100" numberOfLines={1}>{issue.title}</Text>
+                  <Text className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">{issue.category}</Text>
                   <View style={[styles.statusBadge, { backgroundColor: getMarkerColor(issue.status) }]}> 
                     <Text style={styles.statusText}>{getStatusText(issue.status)}</Text>
                   </View>
@@ -123,17 +127,17 @@ export default function MapScreen() {
       </MapView>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.actionButton} onPress={fetchIssues}>
-          <MaterialCommunityIcons name="refresh" size={24} color="#374151" />
+        <TouchableOpacity className="bg-white dark:bg-gray-800 w-12 h-12 rounded-full justify-center items-center shadow-md mb-2" onPress={fetchIssues}>
+          <MaterialCommunityIcons name="refresh" size={24} color={isDark ? "#f3f4f6" : "#374151"} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={goToMyLocation}>
-          <MaterialCommunityIcons name="crosshairs-gps" size={24} color="#374151" />
+        <TouchableOpacity className="bg-white dark:bg-gray-800 w-12 h-12 rounded-full justify-center items-center shadow-md mb-2" onPress={goToMyLocation}>
+          <MaterialCommunityIcons name="crosshairs-gps" size={24} color={isDark ? "#f3f4f6" : "#374151"} />
         </TouchableOpacity>
       </View>
 
       {loading && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0000ff" />
+        <View className="absolute top-1/2 left-1/2 -ml-5 -mt-5 bg-white dark:bg-gray-800 p-2.5 rounded-2xl shadow-md">
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       )}
     </View>
@@ -141,9 +145,6 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   map: {
     width: '100%',
     height: '100%',
@@ -154,62 +155,11 @@ const styles = StyleSheet.create({
     right: 16,
     gap: 12,
   },
-  actionButton: {
-    backgroundColor: 'white',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    marginBottom: 8,
-  },
-  loadingContainer: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -20 }, { translateY: -20 }],
-    backgroundColor: 'white',
-    padding: 10,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  calloutContainer: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 8,
-    width: 200,
-    flexDirection: 'column',
-    borderColor: '#e5e7eb',
-    borderWidth: 1,
-  },
   calloutImage: {
     width: '100%',
     height: 100,
     borderRadius: 8,
     marginBottom: 8,
-  },
-  calloutTextContainer: {
-    flex: 1,
-  },
-  calloutTitle: {
-    fontWeight: 'bold',
-    fontSize: 14,
-    marginBottom: 4,
-    color: '#1f2937',
-  },
-  calloutCategory: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 6,
   },
   statusBadge: {
     alignSelf: 'flex-start',

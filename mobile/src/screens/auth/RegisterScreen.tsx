@@ -37,29 +37,31 @@ export default function RegisterScreen({ navigation }: any) {
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
+      className="flex-1 bg-white dark:bg-gray-900"
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 32 }}>
         <View className="mb-10">
-          <Text className="text-4xl font-bold text-blue-600 mb-2">Kayıt Ol</Text>
-          <Text className="text-gray-500 text-lg">SmartCity'ye katılın</Text>
+          <Text className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">Kayıt Ol</Text>
+          <Text className="text-gray-500 dark:text-gray-400 text-lg">SmartCity'ye katılın</Text>
         </View>
 
         <View className="mb-6">
-          <Text className="text-gray-700 font-medium mb-2">Ad Soyad</Text>
+          <Text className="text-gray-700 dark:text-gray-300 font-medium mb-2">Ad Soyad</Text>
           <TextInput
-            className="bg-gray-100 p-4 rounded-xl text-gray-800"
+            className="bg-gray-100 dark:bg-gray-800 p-4 rounded-xl text-gray-800 dark:text-gray-100 border border-transparent dark:border-gray-700"
             placeholder="Adınız ve Soyadınız"
+            placeholderTextColor="#9ca3af"
             value={displayName}
             onChangeText={setDisplayName}
           />
         </View>
 
         <View className="mb-6">
-          <Text className="text-gray-700 font-medium mb-2">E-posta</Text>
+          <Text className="text-gray-700 dark:text-gray-300 font-medium mb-2">E-posta</Text>
           <TextInput
-            className="bg-gray-100 p-4 rounded-xl text-gray-800"
+            className="bg-gray-100 dark:bg-gray-800 p-4 rounded-xl text-gray-800 dark:text-gray-100 border border-transparent dark:border-gray-700"
             placeholder="E-posta adresiniz"
+            placeholderTextColor="#9ca3af"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -68,10 +70,11 @@ export default function RegisterScreen({ navigation }: any) {
         </View>
 
         <View className="mb-6">
-          <Text className="text-gray-700 font-medium mb-2">Şifre</Text>
+          <Text className="text-gray-700 dark:text-gray-300 font-medium mb-2">Şifre</Text>
           <TextInput
-            className="bg-gray-100 p-4 rounded-xl text-gray-800"
+            className="bg-gray-100 dark:bg-gray-800 p-4 rounded-xl text-gray-800 dark:text-gray-100 border border-transparent dark:border-gray-700"
             placeholder="Şifreniz"
+            placeholderTextColor="#9ca3af"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -79,10 +82,11 @@ export default function RegisterScreen({ navigation }: any) {
         </View>
 
         <View className="mb-8">
-          <Text className="text-gray-700 font-medium mb-2">Şifre Tekrarı</Text>
+          <Text className="text-gray-700 dark:text-gray-300 font-medium mb-2">Şifre Tekrarı</Text>
           <TextInput
-            className="bg-gray-100 p-4 rounded-xl text-gray-800"
+            className="bg-gray-100 dark:bg-gray-800 p-4 rounded-xl text-gray-800 dark:text-gray-100 border border-transparent dark:border-gray-700"
             placeholder="Şifrenizi tekrar girin"
+            placeholderTextColor="#9ca3af"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
@@ -92,7 +96,7 @@ export default function RegisterScreen({ navigation }: any) {
         <TouchableOpacity
           onPress={handleRegister}
           disabled={loading || localLoading}
-          className={`p-4 rounded-xl items-center ${loading || localLoading ? 'bg-blue-400' : 'bg-blue-600'}`}
+          className={`p-4 rounded-xl items-center ${loading || localLoading ? 'bg-blue-400 dark:bg-blue-500' : 'bg-blue-600 dark:bg-blue-700'}`}
         >
           {loading || localLoading ? (
             <ActivityIndicator color="white" />
@@ -102,9 +106,9 @@ export default function RegisterScreen({ navigation }: any) {
         </TouchableOpacity>
 
         <View className="flex-row justify-center mt-6">
-          <Text className="text-gray-600">Zaten hesabınız var mı? </Text>
+          <Text className="text-gray-600 dark:text-gray-400">Zaten hesabınız var mı? </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text className="text-blue-600 font-bold">Giriş Yap</Text>
+            <Text className="text-blue-600 dark:text-blue-400 font-bold">Giriş Yap</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

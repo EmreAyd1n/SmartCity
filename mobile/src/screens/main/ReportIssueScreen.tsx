@@ -209,23 +209,23 @@ export default function ReportIssueScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-gray-50"
+      className="flex-1 bg-gray-50 dark:bg-gray-900"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
         {/* Header */}
-        <View className="bg-blue-600 pt-16 pb-6 px-4 rounded-b-3xl">
+        <View className="bg-blue-600 dark:bg-blue-800 pt-16 pb-6 px-4 rounded-b-3xl">
           <Text className="text-white text-2xl font-bold">Sorun Bildir</Text>
-          <Text className="text-blue-100 text-sm mt-1">
+          <Text className="text-blue-100 dark:text-blue-200 text-sm mt-1">
             Şehrinizdeki sorunu bize bildirin, hemen ilgilenelim.
           </Text>
         </View>
 
         <View className="px-4 pt-6 pb-10">
           {/* Title Input */}
-          <Text className="text-gray-800 font-semibold text-base mb-2">Başlık</Text>
+          <Text className="text-gray-800 dark:text-gray-100 font-semibold text-base mb-2">Başlık</Text>
           <TextInput
-            className="bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 text-base mb-4"
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-800 dark:text-gray-100 text-base mb-4"
             placeholder="Sorunun kısa başlığı"
             placeholderTextColor="#9ca3af"
             value={title}
@@ -234,26 +234,26 @@ export default function ReportIssueScreen() {
           />
 
           {/* Category Selection */}
-          <Text className="text-gray-800 font-semibold text-base mb-2">Kategori</Text>
+          <Text className="text-gray-800 dark:text-gray-100 font-semibold text-base mb-2">Kategori</Text>
           <View className="flex-row flex-wrap mb-4">
             {CATEGORIES.map((cat) => (
               <TouchableOpacity
                 key={cat.id}
                 className={`flex-row items-center px-3 py-2 rounded-full mr-2 mb-2 border ${
                   selectedCategory === cat.id
-                    ? 'bg-blue-600 border-blue-600'
-                    : 'bg-white border-gray-200'
+                    ? 'bg-blue-600 border-blue-600 dark:bg-blue-700 dark:border-blue-700'
+                    : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
                 }`}
                 onPress={() => setSelectedCategory(cat.id)}
               >
                 <Ionicons
                   name={cat.icon}
                   size={16}
-                  color={selectedCategory === cat.id ? '#ffffff' : '#6b7280'}
+                  color={selectedCategory === cat.id ? '#ffffff' : '#9ca3af'}
                 />
                 <Text
                   className={`ml-1.5 text-sm font-medium ${
-                    selectedCategory === cat.id ? 'text-white' : 'text-gray-600'
+                    selectedCategory === cat.id ? 'text-white' : 'text-gray-600 dark:text-gray-300'
                   }`}
                 >
                   {cat.label}
@@ -263,9 +263,9 @@ export default function ReportIssueScreen() {
           </View>
 
           {/* Description Input */}
-          <Text className="text-gray-800 font-semibold text-base mb-2">Açıklama</Text>
+          <Text className="text-gray-800 dark:text-gray-100 font-semibold text-base mb-2">Açıklama</Text>
           <TextInput
-            className="bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-800 text-base mb-4"
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-800 dark:text-gray-100 text-base mb-4"
             placeholder="Sorunu detaylı olarak açıklayınız..."
             placeholderTextColor="#9ca3af"
             value={description}
@@ -277,10 +277,10 @@ export default function ReportIssueScreen() {
           />
 
           {/* Photo Section */}
-          <Text className="text-gray-800 font-semibold text-base mb-2">Fotoğraf</Text>
+          <Text className="text-gray-800 dark:text-gray-100 font-semibold text-base mb-2">Fotoğraf</Text>
           {imageUri ? (
             <View className="mb-4">
-              <View className="rounded-xl overflow-hidden border border-gray-200">
+              <View className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
                 <Image
                   source={{ uri: imageUri }}
                   style={{ width: '100%', height: 200 }}
@@ -296,27 +296,27 @@ export default function ReportIssueScreen() {
             </View>
           ) : (
             <TouchableOpacity
-              className="bg-white border-2 border-dashed border-gray-300 rounded-xl py-8 items-center justify-center mb-4"
+              className="bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl py-8 items-center justify-center mb-4"
               onPress={showImageOptions}
             >
               <Ionicons name="camera-outline" size={40} color="#9ca3af" />
-              <Text className="text-gray-400 mt-2 text-sm">Fotoğraf Çek veya Galeriden Seç</Text>
+              <Text className="text-gray-400 dark:text-gray-500 mt-2 text-sm">Fotoğraf Çek veya Galeriden Seç</Text>
             </TouchableOpacity>
           )}
 
           {/* Location Section */}
-          <Text className="text-gray-800 font-semibold text-base mb-2">Konum</Text>
+          <Text className="text-gray-800 dark:text-gray-100 font-semibold text-base mb-2">Konum</Text>
           {location ? (
-            <View className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
+            <View className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-4">
               <View className="flex-row items-center">
-                <View className="bg-emerald-100 p-2 rounded-full">
+                <View className="bg-emerald-100 dark:bg-emerald-900/30 p-2 rounded-full">
                   <Ionicons name="location" size={20} color="#10b981" />
                 </View>
                 <View className="ml-3 flex-1">
-                  <Text className="text-gray-800 font-medium text-sm" numberOfLines={2}>
+                  <Text className="text-gray-800 dark:text-gray-100 font-medium text-sm" numberOfLines={2}>
                     {locationText}
                   </Text>
-                  <Text className="text-gray-400 text-xs mt-0.5">
+                  <Text className="text-gray-400 dark:text-gray-500 text-xs mt-0.5">
                     {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
                   </Text>
                 </View>
@@ -332,19 +332,19 @@ export default function ReportIssueScreen() {
             </View>
           ) : (
             <TouchableOpacity
-              className="bg-white border border-gray-200 rounded-xl p-4 mb-4 flex-row items-center justify-center"
+              className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-4 flex-row items-center justify-center"
               onPress={getCurrentLocation}
               disabled={locationLoading}
             >
               {locationLoading ? (
                 <>
                   <ActivityIndicator size="small" color="#2563eb" />
-                  <Text className="text-blue-600 font-medium ml-2">Konum alınıyor...</Text>
+                  <Text className="text-blue-600 dark:text-blue-400 font-medium ml-2">Konum alınıyor...</Text>
                 </>
               ) : (
                 <>
                   <Ionicons name="navigate-outline" size={20} color="#2563eb" />
-                  <Text className="text-blue-600 font-medium ml-2">Mevcut Konumumu Kullan</Text>
+                  <Text className="text-blue-600 dark:text-blue-400 font-medium ml-2">Mevcut Konumumu Kullan</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -353,7 +353,7 @@ export default function ReportIssueScreen() {
           {/* Submit Button */}
           <TouchableOpacity
             className={`rounded-xl py-4 items-center mt-2 ${
-              submitting ? 'bg-blue-400' : 'bg-blue-600'
+              submitting ? 'bg-blue-400 dark:bg-blue-500' : 'bg-blue-600 dark:bg-blue-700'
             }`}
             onPress={handleSubmit}
             disabled={submitting}

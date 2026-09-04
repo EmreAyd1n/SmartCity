@@ -26,13 +26,13 @@ const getStatusBadge = (status: string) => {
   switch (status) {
     case 'resolved':
     case 'çözüldü':
-      return { text: 'Çözüldü', bg: 'bg-emerald-100', textCol: 'text-emerald-800' };
+      return { text: 'Çözüldü', bg: 'bg-emerald-100 dark:bg-emerald-900/30', textCol: 'text-emerald-800 dark:text-emerald-300' };
     case 'in_progress':
     case 'devam_ediyor':
     case 'işlemde':
-      return { text: 'İşlemde', bg: 'bg-blue-100', textCol: 'text-blue-800' };
+      return { text: 'İşlemde', bg: 'bg-blue-100 dark:bg-blue-900/30', textCol: 'text-blue-800 dark:text-blue-300' };
     default:
-      return { text: 'Bekliyor', bg: 'bg-amber-100', textCol: 'text-amber-800' };
+      return { text: 'Bekliyor', bg: 'bg-amber-100 dark:bg-amber-900/30', textCol: 'text-amber-800 dark:text-amber-300' };
   }
 };
 
@@ -51,14 +51,14 @@ const IssueItem = React.memo(({ issue, onPress }: { issue: Issue, onPress: (issu
 
   return (
     <TouchableOpacity
-      className="bg-white p-4 rounded-2xl shadow-sm mb-3 flex-row justify-between items-center"
+      className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm mb-3 flex-row justify-between items-center"
       onPress={() => onPress(issue)}
       activeOpacity={0.7}
     >
-      <View className="w-12 h-12 rounded-xl mr-3 bg-gray-200 overflow-hidden items-center justify-center relative">
+      <View className="w-12 h-12 rounded-xl mr-3 bg-gray-200 dark:bg-gray-700 overflow-hidden items-center justify-center relative">
         {issue.image_url ? (
           <>
-            {!imageLoaded && <View className="absolute inset-0 bg-gray-300 z-10" />}
+            {!imageLoaded && <View className="absolute inset-0 bg-gray-300 dark:bg-gray-600 z-10" />}
             <Image 
               source={{ uri: issue.image_url }} 
               className="w-12 h-12 absolute inset-0" 
@@ -70,8 +70,8 @@ const IssueItem = React.memo(({ issue, onPress }: { issue: Issue, onPress: (issu
         )}
       </View>
       <View className="flex-1 mr-3">
-        <Text className="text-gray-800 font-semibold mb-1" numberOfLines={1}>{issue.title}</Text>
-        <Text className="text-gray-400 text-xs">{formatDate(issue.created_at)}</Text>
+        <Text className="text-gray-800 dark:text-gray-100 font-semibold mb-1" numberOfLines={1}>{issue.title}</Text>
+        <Text className="text-gray-400 dark:text-gray-500 text-xs">{formatDate(issue.created_at)}</Text>
       </View>
       <View className={`px-3 py-1 rounded-full ${badge.bg}`}>
         <Text className={`text-xs font-medium ${badge.textCol}`}>{badge.text}</Text>
@@ -128,14 +128,13 @@ export default function HomeScreen() {
   }, [navigation]);
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-gray-50 dark:bg-gray-900">
       <OfflineBanner />
       <ScrollView 
-        className="flex-1 bg-gray-50"
+        className="flex-1 bg-gray-50 dark:bg-gray-900"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {/* Header */}
-        <View className="bg-blue-600 pt-16 pb-6 px-4 rounded-b-3xl">
+        <View className="bg-blue-600 dark:bg-blue-800 pt-16 pb-6 px-4 rounded-b-3xl">
           <View className="flex-row justify-between items-center">
             <View>
               <Text className="text-blue-100 text-sm">Merhaba,</Text>
@@ -144,7 +143,7 @@ export default function HomeScreen() {
             <View className="flex-row items-center">
               <TouchableOpacity
                 onPress={() => navigation.navigate('Notifications')}
-                className="bg-blue-500 p-2 rounded-full mr-2 relative"
+                className="bg-blue-500 dark:bg-blue-700 p-2 rounded-full mr-2 relative"
               >
                 <Ionicons name="notifications" size={24} color="white" />
                 {unreadCount > 0 && (
@@ -155,7 +154,7 @@ export default function HomeScreen() {
                   </View>
                 )}
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => navigation.navigate('Profile')} className="bg-blue-500 p-2 rounded-full">
+              <TouchableOpacity onPress={() => navigation.navigate('Profile')} className="bg-blue-500 dark:bg-blue-700 p-2 rounded-full">
                 <Ionicons name="person" size={24} color="white" />
               </TouchableOpacity>
             </View>
@@ -170,47 +169,45 @@ export default function HomeScreen() {
         </View>
 
         <View className="px-4 pt-6">
-          {/* Stats */}
-          <Text className="text-lg font-bold text-gray-800 mb-3">Özet İstatistikler</Text>
+          <Text className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">Özet İstatistikler</Text>
           {loading && !refreshing ? (
-            <ActivityIndicator size="small" color="#2563eb" />
+            <ActivityIndicator size="small" color="#3b82f6" />
           ) : (
             <View className="flex-row flex-wrap justify-between">
-              <View className="bg-white w-[48%] p-4 rounded-2xl shadow-sm mb-4">
+              <View className="bg-white dark:bg-gray-800 w-[48%] p-4 rounded-2xl shadow-sm mb-4">
                 <Ionicons name="documents-outline" size={24} color="#3b82f6" />
-                <Text className="text-3xl font-bold text-gray-800 mt-2">{stats?.total || 0}</Text>
-                <Text className="text-gray-500 text-xs mt-1">Toplam Bildirim</Text>
+                <Text className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">{stats?.total || 0}</Text>
+                <Text className="text-gray-500 dark:text-gray-400 text-xs mt-1">Toplam Bildirim</Text>
               </View>
-              <View className="bg-white w-[48%] p-4 rounded-2xl shadow-sm mb-4">
+              <View className="bg-white dark:bg-gray-800 w-[48%] p-4 rounded-2xl shadow-sm mb-4">
                 <Ionicons name="checkmark-circle-outline" size={24} color="#10b981" />
-                <Text className="text-3xl font-bold text-gray-800 mt-2">{stats?.resolved || 0}</Text>
-                <Text className="text-gray-500 text-xs mt-1">Çözülen</Text>
+                <Text className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">{stats?.resolved || 0}</Text>
+                <Text className="text-gray-500 dark:text-gray-400 text-xs mt-1">Çözülen</Text>
               </View>
-              <View className="bg-white w-[48%] p-4 rounded-2xl shadow-sm mb-4">
+              <View className="bg-white dark:bg-gray-800 w-[48%] p-4 rounded-2xl shadow-sm mb-4">
                 <Ionicons name="construct-outline" size={24} color="#f59e0b" />
-                <Text className="text-3xl font-bold text-gray-800 mt-2">{stats?.inProgress || 0}</Text>
-                <Text className="text-gray-500 text-xs mt-1">İşlemde</Text>
+                <Text className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">{stats?.inProgress || 0}</Text>
+                <Text className="text-gray-500 dark:text-gray-400 text-xs mt-1">İşlemde</Text>
               </View>
-              <View className="bg-white w-[48%] p-4 rounded-2xl shadow-sm mb-4">
+              <View className="bg-white dark:bg-gray-800 w-[48%] p-4 rounded-2xl shadow-sm mb-4">
                 <Ionicons name="people-outline" size={24} color="#8b5cf6" />
-                <Text className="text-3xl font-bold text-gray-800 mt-2">{stats?.activeTeams || 0}</Text>
-                <Text className="text-gray-500 text-xs mt-1">Saha Ekibi Aktif</Text>
+                <Text className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">{stats?.activeTeams || 0}</Text>
+                <Text className="text-gray-500 dark:text-gray-400 text-xs mt-1">Saha Ekibi Aktif</Text>
               </View>
             </View>
           )}
 
-          {/* Quick Actions */}
-          <Text className="text-lg font-bold text-gray-800 mb-3 mt-2">Hızlı İşlemler</Text>
+          <Text className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3 mt-2">Hızlı İşlemler</Text>
           <View className="flex-row justify-between mb-6">
             <TouchableOpacity 
-              className="bg-blue-600 flex-1 mr-2 p-4 rounded-2xl items-center flex-row justify-center"
+              className="bg-blue-600 dark:bg-blue-700 flex-1 mr-2 p-4 rounded-2xl items-center flex-row justify-center"
               onPress={() => navigation.navigate('Report')}
             >
               <Ionicons name="add-circle" size={24} color="white" />
               <Text className="text-white font-bold ml-2">Sorun Bildir</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              className="bg-emerald-500 flex-1 ml-2 p-4 rounded-2xl items-center flex-row justify-center"
+              className="bg-emerald-500 dark:bg-emerald-600 flex-1 ml-2 p-4 rounded-2xl items-center flex-row justify-center"
               onPress={() => navigation.navigate('Map')}
             >
               <Ionicons name="map" size={24} color="white" />
@@ -218,19 +215,18 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Recent Activity */}
           <View className="flex-row justify-between items-end mb-3">
-            <Text className="text-lg font-bold text-gray-800">Son Bildirimler</Text>
+            <Text className="text-lg font-bold text-gray-800 dark:text-gray-100">Son Bildirimler</Text>
             <TouchableOpacity>
-              <Text className="text-blue-600 text-sm">Tümünü Gör</Text>
+              <Text className="text-blue-600 dark:text-blue-400 text-sm">Tümünü Gör</Text>
             </TouchableOpacity>
           </View>
 
           {loading && !refreshing ? (
-            <ActivityIndicator size="small" color="#2563eb" className="mt-4" />
+            <ActivityIndicator size="small" color="#3b82f6" className="mt-4" />
           ) : recentIssues.length === 0 ? (
-            <View className="bg-white p-6 rounded-2xl shadow-sm items-center">
-              <Text className="text-gray-500">Henüz bildirim bulunmamaktadır.</Text>
+            <View className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm items-center">
+              <Text className="text-gray-500 dark:text-gray-400">Henüz bildirim bulunmamaktadır.</Text>
             </View>
           ) : (
             recentIssues.map((issue) => (

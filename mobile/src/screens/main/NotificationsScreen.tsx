@@ -99,7 +99,7 @@ export default function NotificationsScreen() {
     ({ item }: { item: NotificationLog }) => (
       <TouchableOpacity
         className={`mx-4 mb-3 p-4 rounded-2xl shadow-sm flex-row items-start ${
-          item.isRead ? 'bg-white' : 'bg-blue-50'
+          item.isRead ? 'bg-white dark:bg-gray-800' : 'bg-blue-50 dark:bg-blue-900/30'
         }`}
         onPress={() => handleNotificationPress(item)}
         activeOpacity={0.7}
@@ -107,7 +107,7 @@ export default function NotificationsScreen() {
         {/* Unread indicator */}
         <View className="w-4 pt-1 items-center mr-2">
           {!item.isRead ? (
-            <View className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+            <View className="w-2.5 h-2.5 rounded-full bg-blue-600 dark:bg-blue-500" />
           ) : (
             <View className="w-2.5 h-2.5" />
           )}
@@ -116,15 +116,15 @@ export default function NotificationsScreen() {
         {/* Content */}
         <View className="flex-1">
           <Text
-            className="text-base font-bold text-gray-900 mb-1"
+            className="text-base font-bold text-gray-900 dark:text-gray-100 mb-1"
             numberOfLines={1}
           >
             {item.title}
           </Text>
-          <Text className="text-gray-500 text-sm mb-2" numberOfLines={2}>
+          <Text className="text-gray-500 dark:text-gray-400 text-sm mb-2" numberOfLines={2}>
             {item.body}
           </Text>
-          <Text className="text-gray-400 text-xs">
+          <Text className="text-gray-400 dark:text-gray-500 text-xs">
             {formatDate(item.receivedAt)}
           </Text>
         </View>
@@ -144,10 +144,10 @@ export default function NotificationsScreen() {
     () => (
       <View className="flex-1 justify-center items-center pt-32 px-4">
         <Ionicons name="notifications-off-outline" size={64} color="#9ca3af" />
-        <Text className="text-gray-500 text-lg font-semibold mt-4">
+        <Text className="text-gray-500 dark:text-gray-400 text-lg font-semibold mt-4">
           Henüz bildirim yok
         </Text>
-        <Text className="text-gray-400 text-sm mt-1 text-center">
+        <Text className="text-gray-400 dark:text-gray-500 text-sm mt-1 text-center">
           Yeni bildirimleriniz burada listelenecektir.
         </Text>
       </View>
@@ -156,22 +156,22 @@ export default function NotificationsScreen() {
   );
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <View className="pt-14 flex-row items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+      <View className="pt-14 flex-row items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           className="p-2 -ml-2 rounded-full"
         >
-          <Ionicons name="arrow-back" size={24} color="#1f2937" />
+          <Ionicons name="arrow-back" size={24} color="#9ca3af" />
         </TouchableOpacity>
-        <Text className="text-lg font-bold text-gray-800">Bildirimler</Text>
+        <Text className="text-lg font-bold text-gray-800 dark:text-gray-100">Bildirimler</Text>
         {notifications.length > 0 ? (
           <TouchableOpacity
             onPress={handleClearAll}
             className="py-1 px-2 rounded-lg"
           >
-            <Text className="text-red-500 text-sm font-medium">
+            <Text className="text-red-500 dark:text-red-400 text-sm font-medium">
               Tümünü Temizle
             </Text>
           </TouchableOpacity>
