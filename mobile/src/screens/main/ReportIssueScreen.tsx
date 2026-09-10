@@ -105,14 +105,24 @@ export default function ReportIssueScreen() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('İzin Gerekli', 'Konum için konum erişim izni gereklidir.');
+        Alert.alert(
+          'İzin Gerekli',
+          'Konumunuzu otomatik bulmak için konum izni gereklidir. Lütfen ayarlardan izin verin veya adresinizi açıklamaya yazın.'
+        );
         setLocationLoading(false);
         return;
       }
 
-      const currentLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
+      // We add timeout to prevent hanging, and fallback to balanced accuracy if high takes too long
+      let currentLocation;
+      try {
+        currentLocation = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+      } catch (e) {
+        currentLocation = await Location.getLastKnownPositionAsync();
+        if (!currentLocation) throw new Error('Konum alınamadı');
+      }
 
       const coords = {
         latitude: currentLocation.coords.latitude,
@@ -138,42 +148,21 @@ export default function ReportIssueScreen() {
         setLocationText(`${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`);
       }
     } catch (err) {
-      Alert.alert('Hata', 'Konum alınamadı. Lütfen GPS\'inizin açık olduğundan emin olun.');
+      Alert.alert(
+        'Konum Hatası',
+        'Konumunuz alınamadı. Cihazınızın GPS\'inin açık olduğundan emin olun veya sorunun adresini açıklamaya ekleyin.'
+      );
     } finally {
       setLocationLoading(false);
     }
   };
 
-  // --- Submit ---
-  const handleSubmit = async () => {
-    // Validation
-    if (!title.trim()) {
-      Alert.alert('Uyarı', 'Lütfen bir başlık giriniz.');
-      return;
-    }
-    if (!selectedCategory) {
-      Alert.alert('Uyarı', 'Lütfen bir kategori seçiniz.');
-      return;
-    }
-    if (!description.trim()) {
-      Alert.alert('Uyarı', 'Lütfen bir açıklama giriniz.');
-      return;
-    }
-
-    setSubmitting(true);
+  const createAndNavigate = async (uploadedImageUrl?: string) => {
     try {
-      let uploadedImageUrl: string | undefined;
-
-      // Upload image if selected
-      if (imageUri) {
-        uploadedImageUrl = await uploadIssueImage(imageUri);
-      }
-
-      // Create issue record
       await createIssue({
         title: title.trim(),
         description: description.trim(),
-        category: selectedCategory,
+        category: selectedCategory!,
         latitude: location?.latitude,
         longitude: location?.longitude,
         image_url: uploadedImageUrl,
@@ -197,13 +186,59 @@ export default function ReportIssueScreen() {
               navigation.navigate('Home');
             },
           },
-        ],
+        ]
       );
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.';
-      Alert.alert('Hata', `Bildirim gönderilemedi: ${errorMessage}`);
+      Alert.alert('Hata', `Bildirim kaydedilemedi: ${errorMessage}`);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // --- Submit ---
+  const handleSubmit = async () => {
+    // Validation
+    if (!title.trim()) {
+      Alert.alert('Eksik Bilgi', 'Lütfen sorunu anlatan kısa bir başlık giriniz.');
+      return;
+    }
+    if (!selectedCategory) {
+      Alert.alert('Eksik Bilgi', 'Lütfen sorunun ait olduğu kategoriyi seçiniz.');
+      return;
+    }
+    if (!description.trim()) {
+      Alert.alert('Eksik Bilgi', 'Lütfen sorunu detaylı olarak açıklayınız.');
+      return;
+    }
+
+    setSubmitting(true);
+    let uploadedImageUrl: string | undefined;
+
+    if (imageUri) {
+      try {
+        uploadedImageUrl = await uploadIssueImage(imageUri);
+        await createAndNavigate(uploadedImageUrl);
+      } catch (imageErr: any) {
+        Alert.alert(
+          'Bağlantı Hatası',
+          'Fotoğraf yüklenirken bir sorun oluştu veya zaman aşımına uğradı. Fotoğrafsız devam etmek ister misiniz?',
+          [
+            { 
+              text: 'İptal', 
+              style: 'cancel', 
+              onPress: () => setSubmitting(false) 
+            },
+            { 
+              text: 'Fotoğrafsız Gönder', 
+              style: 'destructive',
+              onPress: () => createAndNavigate(undefined) 
+            }
+          ]
+        );
+      }
+    } else {
+      await createAndNavigate(undefined);
     }
   };
 

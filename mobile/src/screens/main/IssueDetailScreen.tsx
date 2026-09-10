@@ -3,7 +3,6 @@ import {
   View,
   Text,
   ScrollView,
-  Image,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
@@ -14,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { updateIssueStatus, Issue } from '../../services/issueService';
 import { sendLocalNotification } from '../../services/notificationService';
+import FallbackImage from '../../components/common/FallbackImage';
 
 type IssueDetailRouteParams = {
   IssueDetail: {
@@ -196,9 +196,12 @@ export default function IssueDetailScreen() {
       <ScrollView className="flex-1">
         {/* Image */}
         {issue.image_url ? (
-          <Image
-            source={{ uri: issue.image_url }}
-            className="w-full h-56"
+          <FallbackImage
+            uri={issue.image_url}
+            fallbackIcon="image-outline"
+            fallbackIconSize={48}
+            fallbackIconColor="#9ca3af"
+            containerStyle={{ width: '100%', height: 224 }}
             resizeMode="cover"
           />
         ) : (

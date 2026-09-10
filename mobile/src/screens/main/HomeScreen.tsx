@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation, useFocusEffect, CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -9,6 +9,7 @@ import { getRecentIssues, getIssueStats, Issue, IssueStats } from '../../service
 import { getUnreadNotificationCount } from '../../services/notificationService';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import OfflineBanner from '../../components/OfflineBanner';
+import FallbackImage from '../../components/common/FallbackImage';
 
 type RootTabParamList = {
   Home: undefined;
@@ -47,7 +48,6 @@ const formatDate = (isoString: string) => {
 
 const IssueItem = React.memo(({ issue, onPress }: { issue: Issue, onPress: (issue: Issue) => void }) => {
   const badge = getStatusBadge(issue.status);
-  const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
     <TouchableOpacity
@@ -55,20 +55,11 @@ const IssueItem = React.memo(({ issue, onPress }: { issue: Issue, onPress: (issu
       onPress={() => onPress(issue)}
       activeOpacity={0.7}
     >
-      <View className="w-12 h-12 rounded-xl mr-3 bg-gray-200 dark:bg-gray-700 overflow-hidden items-center justify-center relative">
-        {issue.image_url ? (
-          <>
-            {!imageLoaded && <View className="absolute inset-0 bg-gray-300 dark:bg-gray-600 z-10" />}
-            <Image 
-              source={{ uri: issue.image_url }} 
-              className="w-12 h-12 absolute inset-0" 
-              onLoad={() => setImageLoaded(true)}
-            />
-          </>
-        ) : (
-          <Ionicons name="image-outline" size={24} color="#9ca3af" />
-        )}
-      </View>
+      <FallbackImage 
+        uri={issue.image_url} 
+        containerStyle={{ width: 48, height: 48, borderRadius: 12, marginRight: 12 }} 
+        fallbackIcon="image-outline"
+      />
       <View className="flex-1 mr-3">
         <Text className="text-gray-800 dark:text-gray-100 font-semibold mb-1" numberOfLines={1}>{issue.title}</Text>
         <Text className="text-gray-400 dark:text-gray-500 text-xs">{formatDate(issue.created_at)}</Text>

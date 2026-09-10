@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import MapView, { Marker, Callout, Region } from 'react-native-maps';
 import { Issue, getActiveIssuesWithCoordinates } from '../../services/issueService';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import OfflineBanner from '../../components/OfflineBanner';
 import { useTheme } from '../../context/ThemeContext';
+import FallbackImage from '../../components/common/FallbackImage';
 
 const INITIAL_REGION: Region = {
   latitude: 38.6748,
@@ -111,7 +112,7 @@ export default function MapScreen() {
             <Callout tooltip onPress={() => navigation.navigate('IssueDetail', { issue })}> 
               <View className="bg-white dark:bg-gray-800 rounded-xl p-2 w-[200px] flex-col border border-gray-200 dark:border-gray-700">
                 {issue.image_url && (
-                  <Image source={{ uri: issue.image_url }} style={styles.calloutImage} />
+                  <FallbackImage uri={issue.image_url} style={styles.calloutImage} fallbackIcon="image-outline" />
                 )}
                 <View className="flex-1">
                   <Text className="font-bold text-sm mb-1 text-gray-800 dark:text-gray-100" numberOfLines={1}>{issue.title}</Text>

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Alert, Image, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import * as ImagePicker from 'expo-image-picker';
 import { profileService } from '../../services/profileService';
+import FallbackImage from '../../components/common/FallbackImage';
 
 const getRoleBadge = (role: 'citizen' | 'field_team' | 'admin') => {
   switch (role) {
@@ -108,7 +109,14 @@ export default function ProfileScreen() {
           disabled={uploadingAvatar}
         >
           {profile?.avatar_url ? (
-            <Image source={{ uri: profile.avatar_url }} className="w-full h-full rounded-full" />
+            <FallbackImage 
+              uri={profile.avatar_url} 
+              fallbackIcon="person" 
+              fallbackIconSize={50} 
+              fallbackIconColor="white"
+              containerStyle={{ width: '100%', height: '100%', borderRadius: 48 }}
+              style={{ borderRadius: 48 }}
+            />
           ) : (
             <Ionicons name="person" size={50} color="white" />
           )}
