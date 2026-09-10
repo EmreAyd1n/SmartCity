@@ -16,6 +16,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
+import * as Haptics from 'expo-haptics';
 import { uploadIssueImage, createIssue } from '../../services/issueService';
 
 type RootTabParamList = {
@@ -168,6 +169,8 @@ export default function ReportIssueScreen() {
         image_url: uploadedImageUrl,
       });
 
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
       Alert.alert(
         'Başarılı! ✅',
         'Sorun bildiriminiz başarıyla gönderildi. En kısa sürede incelenecektir.',
@@ -189,6 +192,7 @@ export default function ReportIssueScreen() {
         ]
       );
     } catch (err) {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       const errorMessage = err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu.';
       Alert.alert('Hata', `Bildirim kaydedilemedi: ${errorMessage}`);
     } finally {
@@ -279,7 +283,10 @@ export default function ReportIssueScreen() {
                     ? 'bg-blue-600 border-blue-600 dark:bg-blue-700 dark:border-blue-700'
                     : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
                 }`}
-                onPress={() => setSelectedCategory(cat.id)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedCategory(cat.id);
+                }}
               >
                 <Ionicons
                   name={cat.icon}

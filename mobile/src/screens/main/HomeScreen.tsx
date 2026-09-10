@@ -10,6 +10,9 @@ import { getUnreadNotificationCount } from '../../services/notificationService';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import OfflineBanner from '../../components/OfflineBanner';
 import IssueCard from '../../components/IssueCard';
+import SkeletonCard from '../../components/common/SkeletonCard';
+import { SkeletonStats } from '../../components/common/SkeletonLoaders';
+import EmptyState from '../../components/common/EmptyState';
 
 type RootTabParamList = {
   Home: undefined;
@@ -109,7 +112,7 @@ export default function HomeScreen() {
       <View className="px-4 pt-6">
         <Text className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-3">Özet İstatistikler</Text>
         {loading && !refreshing ? (
-          <ActivityIndicator size="small" color="#3b82f6" />
+          <SkeletonStats />
         ) : (
           <View className="flex-row flex-wrap justify-between">
             <View className="bg-white dark:bg-gray-800 w-[48%] p-4 rounded-2xl shadow-sm mb-4">
@@ -161,7 +164,7 @@ export default function HomeScreen() {
         </View>
 
         {loading && !refreshing && (
-          <ActivityIndicator size="small" color="#3b82f6" className="mt-4 mb-4" />
+          <SkeletonCard count={3} />
         )}
       </View>
     </>
@@ -170,11 +173,15 @@ export default function HomeScreen() {
   const renderEmpty = useCallback(() => {
     if (loading && !refreshing) return null;
     return (
-      <View className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm items-center mx-4">
-        <Text className="text-gray-500 dark:text-gray-400">Henüz bildirim bulunmamaktadır.</Text>
-      </View>
+      <EmptyState 
+        icon="document-text-outline"
+        title="Bildirim Yok"
+        description="Henüz bir bildirim bulunmamaktadır. İlk bildirimde bulunun!"
+        buttonText="Sorun Bildir"
+        onButtonPress={() => navigation.navigate('Report')}
+      />
     );
-  }, [loading, refreshing]);
+  }, [loading, refreshing, navigation]);
 
   const renderItem = useCallback(({ item }: { item: Issue }) => (
     <View className="px-4">

@@ -19,6 +19,8 @@ import {
 } from '../../services/notificationService';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import NotificationItem from '../../components/NotificationItem';
+import EmptyState from '../../components/common/EmptyState';
+import { SkeletonNotificationList } from '../../components/common/SkeletonLoaders';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -108,15 +110,11 @@ export default function NotificationsScreen() {
 
   const renderEmptyState = useCallback(
     () => (
-      <View className="flex-1 justify-center items-center pt-32 px-4">
-        <Ionicons name="notifications-off-outline" size={64} color="#9ca3af" />
-        <Text className="text-gray-500 dark:text-gray-400 text-lg font-semibold mt-4">
-          Henüz bildirim yok
-        </Text>
-        <Text className="text-gray-400 dark:text-gray-500 text-sm mt-1 text-center">
-          Yeni bildirimleriniz burada listelenecektir.
-        </Text>
-      </View>
+      <EmptyState 
+        icon="notifications-off-outline"
+        title="Henüz bildirim yok"
+        description="Yeni bildirimleriniz burada listelenecektir."
+      />
     ),
     []
   );
@@ -148,9 +146,7 @@ export default function NotificationsScreen() {
 
       {/* Content */}
       {loading ? (
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#2563eb" />
-        </View>
+        <SkeletonNotificationList count={6} />
       ) : (
         <FlatList
           data={notifications}

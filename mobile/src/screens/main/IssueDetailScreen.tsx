@@ -14,6 +14,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { updateIssueStatus, Issue } from '../../services/issueService';
 import { sendLocalNotification } from '../../services/notificationService';
 import FallbackImage from '../../components/common/FallbackImage';
+import * as Haptics from 'expo-haptics';
 
 type IssueDetailRouteParams = {
   IssueDetail: {
@@ -99,6 +100,7 @@ export default function IssueDetailScreen() {
               const updated = await updateIssueStatus(issue.id, newStatus);
               if (updated) {
                 setIssue(updated);
+                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 
                 const title = newStatus === 'in_progress' ? 'Bildirim İşleme Alındı' : 'Bildirim Çözüldü';
                 const body = newStatus === 'in_progress' 
@@ -109,9 +111,11 @@ export default function IssueDetailScreen() {
                 
                 Alert.alert('Başarılı', 'Durum başarıyla güncellendi.');
               } else {
+                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                 Alert.alert('Hata', 'Durum güncellenirken bir sorun oluştu.');
               }
             } catch {
+              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
               Alert.alert('Hata', 'Durum güncellenirken bir sorun oluştu.');
             } finally {
               setUpdating(false);
