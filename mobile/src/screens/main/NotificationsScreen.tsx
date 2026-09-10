@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -17,6 +18,7 @@ import {
   clearNotifications,
 } from '../../services/notificationService';
 import { RootStackParamList } from '../../navigation/RootNavigator';
+import NotificationItem from '../../components/NotificationItem';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -97,45 +99,9 @@ export default function NotificationsScreen() {
 
   const renderNotificationItem = useCallback(
     ({ item }: { item: NotificationLog }) => (
-      <TouchableOpacity
-        className={`mx-4 mb-3 p-4 rounded-2xl shadow-sm flex-row items-start ${
-          item.isRead ? 'bg-white dark:bg-gray-800' : 'bg-blue-50 dark:bg-blue-900/30'
-        }`}
-        onPress={() => handleNotificationPress(item)}
-        activeOpacity={0.7}
-      >
-        {/* Unread indicator */}
-        <View className="w-4 pt-1 items-center mr-2">
-          {!item.isRead ? (
-            <View className="w-2.5 h-2.5 rounded-full bg-blue-600 dark:bg-blue-500" />
-          ) : (
-            <View className="w-2.5 h-2.5" />
-          )}
-        </View>
-
-        {/* Content */}
-        <View className="flex-1">
-          <Text
-            className="text-base font-bold text-gray-900 dark:text-gray-100 mb-1"
-            numberOfLines={1}
-          >
-            {item.title}
-          </Text>
-          <Text className="text-gray-500 dark:text-gray-400 text-sm mb-2" numberOfLines={2}>
-            {item.body}
-          </Text>
-          <Text className="text-gray-400 dark:text-gray-500 text-xs">
-            {formatDate(item.receivedAt)}
-          </Text>
-        </View>
-
-        {/* Chevron for items with issueId */}
-        {item.issueId && (
-          <View className="justify-center ml-2 pt-1">
-            <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
-          </View>
-        )}
-      </TouchableOpacity>
+      <View className="px-4">
+        <NotificationItem item={item} onPress={handleNotificationPress} />
+      </View>
     ),
     [handleNotificationPress]
   );
@@ -188,11 +154,15 @@ export default function NotificationsScreen() {
       ) : (
         <FlatList
           data={notifications}
-          keyExtractor={(item) => item.id}
+          keyExtractor={useCallback((item: NotificationLog) => item.id, [])}
           renderItem={renderNotificationItem}
           ListEmptyComponent={renderEmptyState}
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
+          initialNumToRender={8}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
         />
       )}
     </View>
