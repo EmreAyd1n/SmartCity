@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, RefreshControl, TouchableOpacity, ActivityIndicator, FlatList, Platform } from 'react-native';
+import { View, Text, RefreshControl, TouchableOpacity, FlatList, Platform } from 'react-native';
 import { useNavigation, useFocusEffect, CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';

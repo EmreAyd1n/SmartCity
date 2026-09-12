@@ -8,6 +8,12 @@ import { useEffect } from 'react';
 import { registerForPushNotificationsAsync } from './src/services/notificationService';
 import ErrorBoundary from './src/components/common/ErrorBoundary';
 
+if (!__DEV__) {
+  console.log = () => {};
+  console.warn = () => {};
+  console.error = () => {};
+}
+
 export default function App() {
   useEffect(() => {
     registerForPushNotificationsAsync().catch(console.error);

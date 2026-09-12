@@ -5,7 +5,6 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,22 +22,6 @@ import EmptyState from '../../components/common/EmptyState';
 import { SkeletonNotificationList } from '../../components/common/SkeletonLoaders';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-const formatDate = (isoString: string): string => {
-  try {
-    const date = new Date(isoString);
-    if (isNaN(date.getTime())) return isoString;
-    return date.toLocaleDateString('tr-TR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return isoString;
-  }
-};
 
 export default function NotificationsScreen() {
   const navigation = useNavigation<NavigationProp>();
